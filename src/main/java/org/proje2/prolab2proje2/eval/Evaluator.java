@@ -1,0 +1,4 @@
+package org.proje2.prolab2proje2.eval;
+
+public class Evaluator {
+}

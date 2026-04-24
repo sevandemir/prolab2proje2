@@ -1,6 +1,8 @@
 package org.proje2.prolab2proje2.algorithms;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.Comparator;
 
@@ -28,5 +30,21 @@ public class KNNAlgorithm{
                         .collect(Collectors.toList()); //Wrap remaining items in a new UserRecord list 
                         
         return KNeighbourList;
+    }
+
+    public String predictCategory(List <UserRecord> KNeighbours){
+
+        String predictedCategory;
+
+        Map <String,Long> categoryCounts=KNeighbours.stream()
+                                        .map(UserRecord::getCategory) //Turn each UserRecord into category
+                                        .collect(Collectors.groupingBy(Function.identity(),Collectors.counting())); //Group by -> Function identity : "Gida" Counting : 5 -> Gida : 5 
+
+        predictedCategory = categoryCounts.entrySet().stream()
+                            .max(Map.Entry.comparingByValue()) //Take the maximum according to values -> Gida : 5
+                            .map(Map.Entry::getKey) //Get key value -> "Gida" not the number 5
+                            .orElse("Unknown"); //Shield 
+
+        return predictedCategory;
     }
 }

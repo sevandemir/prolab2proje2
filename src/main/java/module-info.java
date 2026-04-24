@@ -1,4 +1,7 @@
-module org.proje2.prolab2proje2 {
+module org.proje2.prolab2proje2{
+
+    requires org.apache.poi.poi;
+    requires org.apache.poi.ooxml;
     requires javafx.controls;
     requires javafx.fxml;
 

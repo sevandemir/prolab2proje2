@@ -70,6 +70,10 @@ public class DataLoader{
         catch(IOException error){
             System.err.println("File error!");
         }
+        finally{
+            System.out.println("Done");
+        }
+        
         return recordList; //Return record list for preprocessors 
     }
 }

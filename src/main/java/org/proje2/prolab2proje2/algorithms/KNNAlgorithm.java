@@ -8,7 +8,27 @@ import java.util.Comparator;
 
 import org.proje2.prolab2proje2.data.UserRecord;
 
-public class KNNAlgorithm{
+public class KNNAlgorithm implements IClassifier{
+
+    private List<UserRecord> dataSet;
+    private int k;
+
+    public KNNAlgorithm(int k){
+        this.k = k; //Class' own K and parameter K
+    }
+
+    @Override
+    public void trainModel(List<UserRecord> trainingData){
+
+        dataSet = trainingData;
+    }
+
+    @Override
+    public String predictCategory(UserRecord targetRecord){
+        
+        List<UserRecord> neighbourList = calculateKNearestNeighbours(targetRecord, dataSet, k);
+        return predictCategory(neighbourList);
+    }
 
     private double calculateEuclidDistance(UserRecord firstRecord , UserRecord secondRecord){
 

@@ -21,8 +21,8 @@ public class KNNAlgorithm{
 
         List <UserRecord> KNeighbourList;
     
-        KNeighbourList=allUserRecords.stream() //Filter eliminates all items which doesnt fulfill the condition
-                        .filter(userRecordIterator->userRecordIterator.getClientCode()!=targetRecord.getClientCode()) //Iterate through list with lambda(->) function 
+        KNeighbourList=allUserRecords.stream()//Iterate in whole list with stream                                     //Filter eliminates all items which doesnt fulfill the condition
+                        .filter(userRecordIterator->userRecordIterator.getClientCode()!=targetRecord.getClientCode()) //Apply condition to userRecordIterator and filter if not fullfills
                         .sorted(Comparator.comparingDouble(userRecordIterator -> calculateEuclidDistance(targetRecord , userRecordIterator))) //Sort items according to euclid distance to target
                         .limit(K) //Limit the list with only first K items 
                         .collect(Collectors.toList()); //Wrap remaining items in a new UserRecord list 

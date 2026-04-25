@@ -30,8 +30,8 @@ public class DataLoader{
                 Cell clientCodeCell = excelRow.getCell(9);
                 int clientCode;
 
-                if(clientCodeCell!=null && clientCodeCell.getCellType()==CellType.NUMERIC){ //If cell is not empty and contains a numeric
-                    clientCode=(int)clientCodeCell.getNumericCellValue(); //Get cell value
+                if(clientCodeCell!=null && clientCodeCell.getCellType()==CellType.STRING){ //If cell is not empty and contains a numeric
+                    clientCode=Integer.parseInt(clientCodeCell.getStringCellValue().trim()); //Get clientCode and cast it to int
                 }
                 else{clientCode=0;} //Assign 0 for preprocessor
 
@@ -73,15 +73,10 @@ public class DataLoader{
         finally{
             System.out.println("Done");
         }
-
-        // DataLoader.java içinde return öncesi:
-
-        System.out.println("Before cleaning: " + recordList.size());
         
         PreProcessor preProcessor = new PreProcessor();
-        preProcessor.dataCleaner(recordList);
 
-        System.out.println("After cleaning: " + recordList.size()); // Eğer burası 0 ise sorun temizleyicidedir.
+        preProcessor.dataCleaner(recordList);
         preProcessor.genderEncoder(recordList);
         preProcessor.normalizeData(recordList);
 

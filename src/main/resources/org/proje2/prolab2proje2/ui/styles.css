@@ -1,0 +1,24 @@
+/* Butonlara modern bir hava katalım */
+.button {
+    -fx-font-size: 14px;
+    font-size: 14px;
+    -fx-font-weight: bold;
+    font-weight: bold;
+    -fx-cursor: hand;
+    cursor: pointer;
+    -fx-background-radius: 5;
+}
+
+/* Sadece yeşil butona özel hover (üzerine gelince) efekti */
+.button:hover {
+    -fx-opacity: 0.8;
+    opacity: 0.8;
+}
+
+/* Metin kutusunun (Console) yazı tipini hacker/terminal tarzı yapalım */
+.text-area {
+    -fx-font-family: "Consolas", monospace;
+    font-family: "Consolas", monospace;
+    -fx-control-inner-background: #1e1e1e;
+    -fx-text-fill: #00ff00; /* Terminal yeşili */
+}

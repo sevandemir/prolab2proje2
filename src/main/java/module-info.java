@@ -6,7 +6,9 @@ module org.proje2.prolab2proje2{
     requires javafx.fxml;
 
     requires com.dlsc.formsfx;
+    requires transitive javafx.graphics;
 
-    opens org.proje2.prolab2proje2 to javafx.fxml;
-    exports org.proje2.prolab2proje2;
+    opens org.proje2.prolab2proje2.ui to javafx.fxml;
+    
+    exports org.proje2.prolab2proje2.ui;
 }

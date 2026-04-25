@@ -56,7 +56,6 @@ public class PreProcessor{
 
             currentTotal=record.getLineNetTotal();
             
-            //BAK!! - Biraz fazla Edge case 
             if(min==max){record.setNormalizedLineTotal(0.0);} //If min==max;
 
             else{

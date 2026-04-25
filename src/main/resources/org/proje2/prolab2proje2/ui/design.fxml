@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="org.proje2.prolab2proje2.ui.MainController">
+    
+    <top>
+        <VBox alignment="CENTER" style="-fx-background-color: #2c3e50; -fx-padding: 20;">
+            <Label text="Makine Öğrenmesi Algoritma Kıyaslama" 
+                   style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;"/>
+        </VBox>
+    </top>
+
+    <left>
+        <VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #ecf0f1;">
+            <Label text="Kontrol Paneli" style="-fx-font-weight: bold;"/>
+            <Button text="Dataset Yükle" prefWidth="150"/>
+            <Button text="Testi Başlat" onAction="#handleStartTest" 
+                    style="-fx-background-color: #27ae60; -fx-text-fill: white;" prefWidth="150"/>
+            <Separator/>
+            <Label text="Parametreler"/>
+            <HBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="K Değeri:"/>
+                <TextField fx:id="kValueField" text="5" prefWidth="50"/>
+            </HBox>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox spacing="10" style="-fx-padding: 20;">
+            <Label text="Analiz Sonuçları" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+            <TextArea fx:id="logArea" VBox.vgrow="ALWAYS" editable="false" 
+                      style="-fx-font-family: 'Monospaced'; -fx-font-size: 14px;" 
+                      promptText="Sonuçlar burada görüntülenecek..."/>
+        </VBox>
+    </center>
+
+</BorderPane>

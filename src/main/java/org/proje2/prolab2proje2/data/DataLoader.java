@@ -73,7 +73,18 @@ public class DataLoader{
         finally{
             System.out.println("Done");
         }
+
+        // DataLoader.java içinde return öncesi:
+
+        System.out.println("Before cleaning: " + recordList.size());
         
-        return recordList; //Return record list for preprocessors 
+        PreProcessor preProcessor = new PreProcessor();
+        preProcessor.dataCleaner(recordList);
+
+        System.out.println("After cleaning: " + recordList.size()); // Eğer burası 0 ise sorun temizleyicidedir.
+        preProcessor.genderEncoder(recordList);
+        preProcessor.normalizeData(recordList);
+
+        return recordList; //Return record list
     }
 }

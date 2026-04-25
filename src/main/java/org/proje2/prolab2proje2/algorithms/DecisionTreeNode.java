@@ -1,3 +1,5 @@
+package org.proje2.prolab2proje2.algorithms;
+
 public class DecisionTreeNode{
 
     DecisionTreeNode leftNode; //Left branch

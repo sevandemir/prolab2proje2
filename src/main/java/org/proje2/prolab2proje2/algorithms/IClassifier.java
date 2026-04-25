@@ -5,6 +5,6 @@ import org.proje2.prolab2proje2.data.UserRecord;
 
 public interface IClassifier{
 
-    void trainModel(List<UserRecord> trainingData);
+    void trainModel(List<UserRecord> trainingDataset);
     String predictCategory(UserRecord targetRecord);
 }

@@ -18,16 +18,16 @@ public class KNNAlgorithm implements IClassifier{
     }
 
     @Override
-    public void trainModel(List<UserRecord> trainingData){
+    public void trainModel(List<UserRecord> trainingDataset){
 
-        dataSet = trainingData;
+        dataSet = trainingDataset;
     }
 
     @Override
     public String predictCategory(UserRecord targetRecord){
         
         List<UserRecord> neighbourList = calculateKNearestNeighbours(targetRecord, dataSet, k);
-        return predictCategory(neighbourList);
+        return predictCategoryByFrequency(neighbourList);
     }
 
     private double calculateEuclidDistance(UserRecord firstRecord , UserRecord secondRecord){
@@ -52,7 +52,7 @@ public class KNNAlgorithm implements IClassifier{
         return KNeighbourList;
     }
 
-    public String predictCategory(List <UserRecord> KNeighbours){
+    public String predictCategoryByFrequency(List <UserRecord> KNeighbours){
 
         String predictedCategory;
 

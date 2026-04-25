@@ -11,55 +11,57 @@ public class eval{
 
     public void evaluatePerformance(List<UserRecord> fullDataset){
 
-        Collections.shuffle(fullDataset);
+        Collections.shuffle(fullDataset); //Shuffle dataset to be sure dataset is all random
 
-        int splitPoint = (int)(fullDataset.size()*0.8);
+        int splitPoint = (int)(fullDataset.size()*0.8); //Split dataset %80 training - %20 testing
 
-        List<UserRecord> trainingData=fullDataset.subList(0, splitPoint);
-        List<UserRecord> testData=fullDataset.subList(splitPoint,fullDataset.size());
+        List<UserRecord> trainingData=fullDataset.subList(0, splitPoint); //Training dataset(%80 of full database)
+        List<UserRecord> testData=fullDataset.subList(splitPoint,fullDataset.size()); //Testing dataset(%20 of full database)
 
-        long decisionTreeStartTime = System.nanoTime();
+        //Decision Tree Algorithm 
+        long decisionTreeStartTime = System.nanoTime(); //Decision Tree starting time
 
-        DecisionTreeAlgorithm DecisionTree = new DecisionTreeAlgorithm();
-        DecisionTree.trainModel(trainingData);
+        DecisionTreeAlgorithm DecisionTree = new DecisionTreeAlgorithm(); //Create new Decision Tree
+        DecisionTree.trainModel(trainingData); //Train model with training data
 
-        int decisionTreeCorrectPredictions=0;
+        int decisionTreeCorrectPredictions=0; //Correct predictions of Decision Tree model
 
-        for(UserRecord userRecord :testData){
+        for(UserRecord userRecord :testData){ //Take each user record from testing data 
 
-            if(userRecord.getCategory().equalsIgnoreCase(DecisionTree.predictCategory(userRecord))){
-                decisionTreeCorrectPredictions++;
+            if(userRecord.getCategory().equalsIgnoreCase(DecisionTree.predictCategory(userRecord))){ //Compare predictions and real category
+                decisionTreeCorrectPredictions++; //Increment correct predictions if guessed correct
             }
         }
-        long decisionTreeFinishTime=System.nanoTime();
+        long decisionTreeFinishTime=System.nanoTime(); //Decision tree finishing time
 
-        int K=5;
+        //KNN Algorithm
+        int K=5; //Constant to be decided
 
-        long KNNAlgorithmStartTime = System.nanoTime();
+        long KNNAlgorithmStartTime = System.nanoTime(); //KNN starting time
 
-        KNNAlgorithm KNNAlgorithm = new KNNAlgorithm(K);
-        KNNAlgorithm.trainModel(trainingData);
+        KNNAlgorithm KNNAlgorithm = new KNNAlgorithm(K); //Create KNN model
+        KNNAlgorithm.trainModel(trainingData); //Train model with training data
 
-        int KNNAlgorithmCorrectPredictions=0;
+        int KNNAlgorithmCorrectPredictions=0; //Correct predictions of KNN model
 
-        for(UserRecord userRecord : testData){
-            if(userRecord.getCategory().equalsIgnoreCase(KNNAlgorithm.predictCategory(userRecord))){
-                KNNAlgorithmCorrectPredictions++;
+        for(UserRecord userRecord : testData){ //Take each user record from testing data
+            if(userRecord.getCategory().equalsIgnoreCase(KNNAlgorithm.predictCategory(userRecord))){ //Compare predictions and real category
+                KNNAlgorithmCorrectPredictions++; //Increment correct predictions if guessed correct
             }
         }
 
-        Long KNNAlgorithmFinishTime=System.nanoTime();
+        Long KNNAlgorithmFinishTime=System.nanoTime(); //KNN finishing time
 
-        printTestResults("KNN Algorithm", KNNAlgorithmStartTime, KNNAlgorithmFinishTime, KNNAlgorithmCorrectPredictions, testData.size());
-        printTestResults("Decision Tree Algorithm", decisionTreeStartTime, decisionTreeFinishTime, decisionTreeCorrectPredictions, testData.size());
+        printTestResults("KNN Algorithm", KNNAlgorithmStartTime, KNNAlgorithmFinishTime, KNNAlgorithmCorrectPredictions, testData.size()); //Print out KNN algorithm results
+        printTestResults("Decision Tree Algorithm", decisionTreeStartTime, decisionTreeFinishTime, decisionTreeCorrectPredictions, testData.size()); //Print out Decision Tree results 
     }
 
     void printTestResults(String name, long startTime, long endTime, int correctPredictions, int totalData){
 
-        double predictionAccuracy=(double)correctPredictions/ (double)totalData * 100.00;
-        double predictionDuration= (endTime-startTime) / (1_000_000.0);
+        double predictionAccuracy=(double)correctPredictions/ (double)totalData * 100.00; //Double casting to make double dividing(Not integer dividing) and in % type
+        double predictionDuration= (endTime-startTime) / (1_000_000.0); //Format nanoseconds to miliseconds for better readability
 
-        System.out.println(name + " Prediction Accuracy: " + String.format("%.2f", predictionAccuracy));
-        System.out.println(name + " Prediction Duration: " + String.format("%.4f", predictionDuration)+ "ms");
+        System.out.println(name + " Prediction Accuracy: " + String.format("%.2f", predictionAccuracy)); //Format accuracy to 2 numbers after . 
+        System.out.println(name + " Prediction Duration: " + String.format("%.4f", predictionDuration)+ "ms"); //Format duration to 4 numbers after . 
     }
 }

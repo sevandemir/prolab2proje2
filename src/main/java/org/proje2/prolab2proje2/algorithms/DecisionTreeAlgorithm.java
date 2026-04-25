@@ -31,7 +31,7 @@ public class DecisionTreeAlgorithm implements IClassifier{
         return SearchInDecisionTree(rootNode, targetRecord); //Return prediction
     }
 
-    private List<UserRecord> splitDatasetByGender(String gender , List<UserRecord> dataset){ //Split dataset in half for genders
+    private List<UserRecord> splitDatasetByGender(String gender , List<UserRecord> dataset){ //Split dataset into 2 groups based on genders
 
         List <UserRecord> genderFilteredList=dataset.stream() //Start dataset stream
                                             .filter(userRecordIterator->userRecordIterator.getGender().equalsIgnoreCase(gender)) //Filter stream according to given gender
@@ -44,8 +44,8 @@ public class DecisionTreeAlgorithm implements IClassifier{
 
         if(isHighExpense){
 
-            List<UserRecord> highExpenseRecords=dataset.stream() //Start dataset stream
-                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()>4.25) //Line net total average is 4.25 so if higher then its high expense
+            List<UserRecord> highExpenseRecords=dataset.stream() //Start dataset stream                                //4.25 is used as threshold based on dataset average
+                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()>4.25) //If higher than thresold then its high expense
                                                 .collect(Collectors.toList()); //Collect remaining items in a list 
             return highExpenseRecords;
         }
@@ -83,7 +83,7 @@ public class DecisionTreeAlgorithm implements IClassifier{
         List<UserRecord> lowExpenseUserRecords=splitDatasetBySpending(dataset, false); //Create low expense records 
 
         DecisionTreeNode highExpenseLeaf=CreateLeafNode(highExpenseUserRecords); //Create leaf node for high expenses 
-        DecisionTreeNode lowExpenseLeaf=CreateLeafNode(lowExpenseUserRecords); //Create lead node for low expenses
+        DecisionTreeNode lowExpenseLeaf=CreateLeafNode(lowExpenseUserRecords); //Create leaf node for low expenses
 
         DecisionTreeNode lastBranch=new DecisionTreeNode("LineNetTotal",highExpenseLeaf,lowExpenseLeaf); //Create last branch for 2 leaf nodes
         return lastBranch;

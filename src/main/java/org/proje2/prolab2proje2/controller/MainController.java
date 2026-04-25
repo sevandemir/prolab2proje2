@@ -1,4 +1,4 @@
-package org.proje2.prolab2proje2.model;
+package org.proje2.prolab2proje2.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

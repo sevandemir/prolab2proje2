@@ -13,46 +13,46 @@ public class DecisionTreeAlgorithm implements IClassifier{
     @Override
     public void trainModel(List<UserRecord> trainingDateset){
         
-        List<UserRecord> maleList = splitDatasetByGender("E", trainingDateset);
-        List<UserRecord> femaleList=splitDatasetByGender("K", trainingDateset);
+        List<UserRecord> maleList=splitDatasetByGender("E", trainingDateset); //Create males list by splitting training Dataset
+        List<UserRecord> femaleList=splitDatasetByGender("K", trainingDateset); //Create females list by splitting training Dataset
 
-        DecisionTreeNode maleBranch=CreateSpendingBranches(maleList);
-        DecisionTreeNode femaleBranch=CreateSpendingBranches(femaleList);
+        DecisionTreeNode maleBranch=CreateSpendingBranches(maleList); //Create males branch according to spending
+        DecisionTreeNode femaleBranch=CreateSpendingBranches(femaleList); //Create males branch according to spending
 
-        rootNode=new DecisionTreeNode("Gender",maleBranch,femaleBranch);
+        rootNode=new DecisionTreeNode("Gender",maleBranch,femaleBranch); //Root splits to left:Male right:Female branches
     }   
 
     @Override
     public String predictCategory(UserRecord targetRecord){
 
         if(rootNode==null){
-            return "Model Not Trained";
+            return "Model Not Trained"; //Null shield if model not trained 
         }
-        return SearchInDecisionTree(rootNode, targetRecord);
+        return SearchInDecisionTree(rootNode, targetRecord); //Return prediction
     }
 
-    private List<UserRecord> splitDatasetByGender(String gender , List<UserRecord> dataset){
+    private List<UserRecord> splitDatasetByGender(String gender , List<UserRecord> dataset){ //Split dataset in half for genders
 
-        List <UserRecord> genderFilteredList=dataset.stream()
-                                            .filter(userRecordIterator->userRecordIterator.getGender().equalsIgnoreCase(gender))
-                                            .collect(Collectors.toList());
+        List <UserRecord> genderFilteredList=dataset.stream() //Start dataset stream
+                                            .filter(userRecordIterator->userRecordIterator.getGender().equalsIgnoreCase(gender)) //Filter stream according to given gender
+                                            .collect(Collectors.toList()); //Collect remaining items in a list 
 
         return genderFilteredList;
     }
 
-    private List<UserRecord> splitDatasetBySpending(List <UserRecord> dataset ,Boolean isHighExpense){
+    private List<UserRecord> splitDatasetBySpending(List <UserRecord> dataset ,Boolean isHighExpense){ //Create high and low expense lists according to parameters
 
         if(isHighExpense){
 
-            List<UserRecord> highExpenseRecords=dataset.stream()
-                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()>=50)
-                                                .collect(Collectors.toList());
+            List<UserRecord> highExpenseRecords=dataset.stream() //Start dataset stream
+                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()>4.25) //Line net total average is 4.25 so if higher then its high expense
+                                                .collect(Collectors.toList()); //Collect remaining items in a list 
             return highExpenseRecords;
         }
         
         else{
             List <UserRecord> lowExpenseRecords=dataset.stream()
-                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()<50)
+                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()<=4.25) //Line net total average is 4.25 so if lower then its low expense
                                                 .collect(Collectors.toList());
             return lowExpenseRecords;                                    
         }
@@ -60,61 +60,60 @@ public class DecisionTreeAlgorithm implements IClassifier{
 
     private String predictCategoryByFrequency(List<UserRecord> dataset){
 
-        String category=dataset.stream()
-                        .collect(Collectors.groupingBy(UserRecord::getCategory , Collectors.counting()))
-                        .entrySet().stream()
-                        .max(Map.Entry.comparingByValue())
-                        .map(Map.Entry::getKey)
+        String category=dataset.stream() //Start dataset stream
+                        .collect(Collectors.groupingBy(UserRecord::getCategory , Collectors.counting())) //Group by category:count key-value pairs 
+                        .entrySet().stream() //Start key-value entry stream 
+                        .max(Map.Entry.comparingByValue()) //Compare Map.Entry -> Take maximum "Gida:4"
+                        .map(Map.Entry::getKey) //Get entrys key : "Gida"
                         .orElse("Unknown");
 
-        return category;
+        return category; //Return key
     }
 
     private DecisionTreeNode CreateLeafNode(List <UserRecord> dataset){
 
-        String category = predictCategoryByFrequency(dataset);
+        String category = predictCategoryByFrequency(dataset); //Create a predicted category according to given dataset
 
-        return new DecisionTreeNode(category);  
+        return new DecisionTreeNode(category); //Create a leaf node with predicted category
     }
 
     private DecisionTreeNode CreateSpendingBranches(List <UserRecord> dataset){
 
-        List<UserRecord> highExpenUserRecords=splitDatasetBySpending(dataset, true);
-        List<UserRecord> lowExpenUserRecords=splitDatasetBySpending(dataset, false);
+        List<UserRecord> highExpenseUserRecords=splitDatasetBySpending(dataset, true); //Create high expense records 
+        List<UserRecord> lowExpenseUserRecords=splitDatasetBySpending(dataset, false); //Create low expense records 
 
-        DecisionTreeNode highExpenseLeaf=CreateLeafNode(highExpenUserRecords);
-        DecisionTreeNode lowExpenseLeaf=CreateLeafNode(lowExpenUserRecords);
+        DecisionTreeNode highExpenseLeaf=CreateLeafNode(highExpenseUserRecords); //Create leaf node for high expenses 
+        DecisionTreeNode lowExpenseLeaf=CreateLeafNode(lowExpenseUserRecords); //Create lead node for low expenses
 
-        DecisionTreeNode lastBranch=new DecisionTreeNode("LineNetTotal",highExpenseLeaf,lowExpenseLeaf);
+        DecisionTreeNode lastBranch=new DecisionTreeNode("LineNetTotal",highExpenseLeaf,lowExpenseLeaf); //Create last branch for 2 leaf nodes
         return lastBranch;
     }
 
-    private String SearchInDecisionTree(DecisionTreeNode currentNode , UserRecord targetUserRecord){
+    private String SearchInDecisionTree(DecisionTreeNode currentNode , UserRecord targetUserRecord){ //Recursive function until it reaches a conclusion(leaf node)
 
         if(currentNode.isLeaf){
-            return currentNode.resultCategory;
+            return currentNode.resultCategory; //Break recursion if current node is leaf node
         }
 
-        if(currentNode.attribute.equals("Gender")){
+        if(currentNode.attribute.equals("Gender")){ //If current nodes attribution is gender
 
-            if(targetUserRecord.getGender().equals("E")){
-                return SearchInDecisionTree(currentNode.leftNode, targetUserRecord);
+            if(targetUserRecord.getGender().equals("E")){ //If male
+                return SearchInDecisionTree(currentNode.leftNode, targetUserRecord); //Move to left(males) node
             }
-            else{
-                return SearchInDecisionTree(currentNode.rightNode, targetUserRecord);
+            else{//If female
+                return SearchInDecisionTree(currentNode.rightNode, targetUserRecord);//Move to right(females) node
             }
         }
-        else if(currentNode.attribute.equals("LineNetTotal")){
+        else if(currentNode.attribute.equals("LineNetTotal")){ //If current nodes attribution is Total expense
             
-            if(targetUserRecord.getLineNetTotal()>=50){
-                return SearchInDecisionTree(currentNode.leftNode, targetUserRecord);
+            if(targetUserRecord.getLineNetTotal()>4.25){ //If given record's expense is higher than average 
+                return SearchInDecisionTree(currentNode.leftNode, targetUserRecord); //Move to left(high expense) node
             }
-            else if(targetUserRecord.getLineNetTotal()<50){
-                return SearchInDecisionTree(currentNode.rightNode, targetUserRecord);
+            else if(targetUserRecord.getLineNetTotal()<=4.25){ //If given record's expense is lower than average 
+                return SearchInDecisionTree(currentNode.rightNode, targetUserRecord); //Move to right(lower expense) node
             }
         }
 
         return "Unknown";
     }
-
 }

@@ -4,15 +4,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.proje2.prolab2proje2.data.PreProcessor;
 import org.proje2.prolab2proje2.data.UserRecord;
 
 public class DecisionTreeAlgorithm implements IClassifier{
 
     private DecisionTreeNode rootNode;
+    private List<UserRecord> dataSet;
 
     @Override
     public void trainModel(List<UserRecord> trainingDateset){
         
+        dataSet=trainingDateset;
+
         List<UserRecord> maleList=splitDatasetByGender("E", trainingDateset); //Create males list by splitting training Dataset
         List<UserRecord> femaleList=splitDatasetByGender("K", trainingDateset); //Create females list by splitting training Dataset
 
@@ -44,15 +48,15 @@ public class DecisionTreeAlgorithm implements IClassifier{
 
         if(isHighExpense){
 
-            List<UserRecord> highExpenseRecords=dataset.stream() //Start dataset stream                                //4.25 is used as threshold based on dataset average
-                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()>4.25) //If higher than thresold then its high expense
+            List<UserRecord> highExpenseRecords=dataset.stream() //Start dataset stream
+                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()>PreProcessor.averageValueOfDataset) //If higher than thresold then its high expense
                                                 .collect(Collectors.toList()); //Collect remaining items in a list 
             return highExpenseRecords;
         }
         
         else{
             List <UserRecord> lowExpenseRecords=dataset.stream()
-                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()<=4.25) //Line net total average is 4.25 so if lower then its low expense
+                                                .filter(userRecordIterator->userRecordIterator.getLineNetTotal()<=PreProcessor.averageValueOfDataset) //If lower than average then its low expense
                                                 .collect(Collectors.toList());
             return lowExpenseRecords;                                    
         }
@@ -97,7 +101,7 @@ public class DecisionTreeAlgorithm implements IClassifier{
 
         if(currentNode.attribute.equals("Gender")){ //If current nodes attribution is gender
 
-            if(targetUserRecord.getGender().equals("E")){ //If male
+            if(targetUserRecord.getGender().equalsIgnoreCase("E")){ //If male
                 return SearchInDecisionTree(currentNode.leftNode, targetUserRecord); //Move to left(males) node
             }
             else{//If female
@@ -106,14 +110,28 @@ public class DecisionTreeAlgorithm implements IClassifier{
         }
         else if(currentNode.attribute.equals("LineNetTotal")){ //If current nodes attribution is Total expense
             
-            if(targetUserRecord.getLineNetTotal()>4.25){ //If given record's expense is higher than average 
-                return SearchInDecisionTree(currentNode.leftNode, targetUserRecord); //Move to left(high expense) node
+            if(targetUserRecord.getLineNetTotal()>PreProcessor.averageValueOfDataset){ //If given record's expense is higher than average 
+                return SearchInDecisionTree(currentNode.leftNode, targetUserRecord); //Move to left(high expense) leaf node
             }
-            else if(targetUserRecord.getLineNetTotal()<=4.25){ //If given record's expense is lower than average 
-                return SearchInDecisionTree(currentNode.rightNode, targetUserRecord); //Move to right(lower expense) node
+            else if(targetUserRecord.getLineNetTotal()<=PreProcessor.averageValueOfDataset){ //If given record's expense is lower than average 
+                return SearchInDecisionTree(currentNode.rightNode, targetUserRecord); //Move to right(lower expense) leaf node
             }
         }
 
         return "Unknown";
+    }
+
+    public String predictCategoryForUserInputWithDecisionTree(String genderInput, double lineNetTotalInput){
+
+        String predictedCategoryForUser;
+
+        UserRecord inputRecord = new UserRecord(0, genderInput, lineNetTotalInput, null);
+
+        DecisionTreeAlgorithm DecisionTree = new DecisionTreeAlgorithm();
+        DecisionTree.trainModel(dataSet);
+
+        predictedCategoryForUser=DecisionTree.predictCategory(inputRecord);
+
+        return predictedCategoryForUser;
     }
 }

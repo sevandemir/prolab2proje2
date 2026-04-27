@@ -1,9 +1,15 @@
 package org.proje2.prolab2proje2.data;
 
 import java.util.ArrayList;
+import java.util.DoubleSummaryStatistics;
+import java.util.stream.Collectors;
 
 public class PreProcessor{
     
+    public static double minValueOfDataset=Double.MAX_VALUE;
+    public static double maxValueOfDataset=Double.MIN_VALUE;
+    public static double averageValueOfDataset=0.0;
+
     public void dataCleaner(ArrayList<UserRecord> userRecordList){ //Pass a ArrayList of UserRecord's = userRecordList
 
         userRecordList.removeIf(record->record==DataLoader.INVALID_USER_RECORD_TEMPLATE //Check for Invalid templates first to speed up the process
@@ -27,26 +33,41 @@ public class PreProcessor{
         }
     }
 
+    public void calculateNormalizationStats(ArrayList<UserRecord> userRecordList){
+
+        DoubleSummaryStatistics stats=userRecordList.stream()
+                                        .collect(Collectors.summarizingDouble(UserRecord::getLineNetTotal));
+
+        averageValueOfDataset=stats.getAverage();
+        maxValueOfDataset=stats.getMax();
+        minValueOfDataset=stats.getMin();
+    }
+
     public void normalizeData(ArrayList<UserRecord> userRecordList){ //Pass a ArrayList of UserRecord's = userRecordList
-    
-        double max=Double.MIN_VALUE; //Initialize with min value to find bigger one
-        double min=Double.MAX_VALUE; //Initialize with max vlaue to find smaller one
+
         double currentLineNetTotal=0; 
-
-        for(UserRecord record : userRecordList){ //Iterate through userRecordList
-
-            currentLineNetTotal = record.getLineNetTotal();
-
-            if(currentLineNetTotal>max){max=currentLineNetTotal;} //Find max
-            if(currentLineNetTotal<min){min=currentLineNetTotal;} //Find min
-        }
 
         for(UserRecord record : userRecordList){ //Start normalization process
 
             currentLineNetTotal=record.getLineNetTotal();
 
-            double normalizedLineTotal=(currentLineNetTotal-min)/(max-min); //Normalization formula scaling to 0-1
+            double normalizedLineTotal=(currentLineNetTotal-minValueOfDataset)/(maxValueOfDataset-minValueOfDataset); //Normalization formula scaling to 0-1
             record.setNormalizedLineTotal(normalizedLineTotal); //Set normalizedLineTotal
+        }
+    }
+
+    public static double normalizeInputFromUserInput(double lineNetTotalInput){
+        
+        return (lineNetTotalInput-minValueOfDataset)/(maxValueOfDataset-minValueOfDataset); //Return normalized value of user input for KNN algorithm 
+    }
+    
+    public static int encodeGenderFromUserInput(String genderInput){
+
+        if("K".equalsIgnoreCase(genderInput)){
+            return 0; //For female input
+        }
+        else{
+            return 1; //For male input
         }
     }
 }

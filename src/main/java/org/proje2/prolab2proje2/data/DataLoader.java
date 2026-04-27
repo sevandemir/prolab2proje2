@@ -91,6 +91,7 @@ public class DataLoader{
         PreProcessor preProcessor = new PreProcessor(); //Initialize preprocessor
 
         preProcessor.dataCleaner(recordList); //Clean corrupted data with preprocessor data cleaner
+        preProcessor.calculateNormalizationStats(recordList);//Calculate normalization values for KNN
         preProcessor.genderEncoder(recordList); //Encode gender for KNN algorithm
         preProcessor.normalizeData(recordList); //Normalize data for KNN algorithm
 

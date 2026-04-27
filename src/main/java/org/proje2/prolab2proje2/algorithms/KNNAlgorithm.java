@@ -6,6 +6,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.Comparator;
 
+import org.proje2.prolab2proje2.data.PreProcessor;
 import org.proje2.prolab2proje2.data.UserRecord;
 
 public class KNNAlgorithm implements IClassifier{
@@ -66,5 +67,24 @@ public class KNNAlgorithm implements IClassifier{
                             .orElse("Unknown"); //Shield 
 
         return predictedCategory;
+    }
+
+    public String predictCategoryForUserInputWithKNN(String genderInput, Double lineNetTotalInput, int kInput){
+
+        String predictedCategoryForUser;
+
+        int encodedGenderInput=PreProcessor.encodeGenderFromUserInput(genderInput);
+        double normalizedLineNetTotalInput=PreProcessor.normalizeInputFromUserInput(lineNetTotalInput);
+
+        UserRecord inputRecord = new UserRecord(0, genderInput, lineNetTotalInput, null);
+        inputRecord.setEncodedGender(encodedGenderInput);
+        inputRecord.setNormalizedLineTotal(normalizedLineNetTotalInput);
+
+        KNNAlgorithm KNNAlgorithm = new KNNAlgorithm(kInput); 
+        KNNAlgorithm.trainModel(dataSet);
+
+        predictedCategoryForUser=KNNAlgorithm.predictCategory(inputRecord);
+
+        return predictedCategoryForUser;
     }
 }

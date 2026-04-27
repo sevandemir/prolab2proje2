@@ -21,10 +21,10 @@ public class Evaluator{
         List<UserRecord> testData=fullDataset.subList(splitPoint,fullDataset.size()); //Testing dataset(%20 of full database)
 
         //Decision Tree Algorithm 
-        long decisionTreeStartTime = System.nanoTime(); //Decision Tree starting time
-
         DecisionTreeAlgorithm DecisionTree = new DecisionTreeAlgorithm(); //Create new Decision Tree
         DecisionTree.trainModel(trainingData); //Train model with training data
+
+        long decisionTreeStartTime = System.nanoTime(); //Decision Tree starting time
 
         int decisionTreeCorrectPredictions=0; //Correct predictions of Decision Tree model
 
@@ -37,10 +37,10 @@ public class Evaluator{
         long decisionTreeFinishTime=System.nanoTime(); //Decision tree finishing time
 
         //KNN Algorithm
-        long KNNAlgorithmStartTime = System.nanoTime(); //KNN starting time
-
         KNNAlgorithm KNNAlgorithm = new KNNAlgorithm(K); //Create KNN model
         KNNAlgorithm.trainModel(trainingData); //Train model with training data
+
+        long KNNAlgorithmStartTime = System.nanoTime(); //KNN starting time
 
         int KNNAlgorithmCorrectPredictions=0; //Correct predictions of KNN model
 

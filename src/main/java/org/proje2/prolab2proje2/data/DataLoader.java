@@ -8,6 +8,8 @@ import java.util.Iterator;
 
 public class DataLoader{
     
+    public static final UserRecord INVALID_USER_RECORD_TEMPLATE = new UserRecord(0, null, 0.0, null);
+
     public ArrayList<UserRecord> loadDataFromExcel(String filePath){
 
         ArrayList<UserRecord> recordList = new ArrayList<>(); //Create a new record list made of UserRecords
@@ -27,40 +29,52 @@ public class DataLoader{
                 Row excelRow = rowIterator.next(); //Catch lines
 
                 //Client Code Block
-                Cell clientCodeCell = excelRow.getCell(9);
+                Cell clientCodeCell = excelRow.getCell(9); //Get Client Code Cell
                 int clientCode;
 
-                if(clientCodeCell!=null && clientCodeCell.getCellType()==CellType.STRING){ //If cell is not empty and contains a numeric
-                    clientCode=Integer.parseInt(clientCodeCell.getStringCellValue().trim()); //Get clientCode and cast it to int
+                if(clientCodeCell!=null && clientCodeCell.getCellType()==CellType.STRING){ //If cell is not empty and contains a STRING!
+                    clientCode=Integer.parseInt(clientCodeCell.getStringCellValue().trim()); //Get clientCode and cast it to int to process it in preprocessing
                 }
-                else{clientCode=0;} //Assign 0 for preprocessor
+                else{
+                    recordList.add(INVALID_USER_RECORD_TEMPLATE); //If read an invalid input add with Invalid template so we can delete at preprocessing
+                    continue;
+                }
 
                 //Line Net Total Block
-                Cell lineNetTotalCell = excelRow.getCell(8);
+                Cell lineNetTotalCell = excelRow.getCell(8); //Get cell of Line Net Total
                 double lineNetTotal;
 
-                if(lineNetTotalCell!=null && lineNetTotalCell.getCellType()==CellType.NUMERIC){
-                    lineNetTotal = lineNetTotalCell.getNumericCellValue();
+                if(lineNetTotalCell!=null && lineNetTotalCell.getCellType()==CellType.NUMERIC){ //If cell is not empty and contains a numeric 
+                    lineNetTotal = lineNetTotalCell.getNumericCellValue(); //Get line net total
                 }
-                else{lineNetTotal=0;}
+                else{
+                    recordList.add(INVALID_USER_RECORD_TEMPLATE); //If read an invalid input add with Invalid template so we can delete at preprocessing
+                    continue;
+                }
                 
                 //Gender Block
-                Cell genderCell = excelRow.getCell(17);
+                Cell genderCell = excelRow.getCell(17); //Get cell of gender
                 String gender;
 
                 if(genderCell!=null && genderCell.getCellType()==CellType.STRING){ //If cell is not empty and contains a string 
-                    gender = genderCell.getStringCellValue(); //Get cell value
+                    gender = genderCell.getStringCellValue(); //Get gender
                 }
-                else{gender=null;} //Assign null for preprocessor
+                else{
+                    recordList.add(INVALID_USER_RECORD_TEMPLATE); //If read an invalid input add with Invalid template so we can delete at preprocessing
+                    continue;
+                }
                 
                 //Category Block
-                Cell categoryCell=excelRow.getCell(12);
+                Cell categoryCell=excelRow.getCell(12); //Get cell of category
                 String category;
 
-                if(categoryCell!=null && categoryCell.getCellType()==CellType.STRING){
-                    category = categoryCell.getStringCellValue();
+                if(categoryCell!=null && categoryCell.getCellType()==CellType.STRING){ //If cell is not empty and contains a string 
+                    category = categoryCell.getStringCellValue(); //Get category
                 }
-                else{category=null;}
+                else{
+                    recordList.add(INVALID_USER_RECORD_TEMPLATE); //If read an invalid input add with Invalid template so we can delete at preprocessing
+                    continue;
+                }
 
                 UserRecord userRecord = new UserRecord(clientCode, gender, lineNetTotal, category); //Create UserRecord object
                 recordList.add(userRecord); //Add user record to Array List
@@ -74,11 +88,11 @@ public class DataLoader{
             System.out.println("Done");
         }
         
-        PreProcessor preProcessor = new PreProcessor();
+        PreProcessor preProcessor = new PreProcessor(); //Initialize preprocessor
 
-        preProcessor.dataCleaner(recordList);
-        preProcessor.genderEncoder(recordList);
-        preProcessor.normalizeData(recordList);
+        preProcessor.dataCleaner(recordList); //Clean corrupted data with preprocessor data cleaner
+        preProcessor.genderEncoder(recordList); //Encode gender for KNN algorithm
+        preProcessor.normalizeData(recordList); //Normalize data for KNN algorithm
 
         return recordList; //Return record list
     }

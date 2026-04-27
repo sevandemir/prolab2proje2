@@ -11,13 +11,7 @@ import javafx.scene.control.TextArea;
 
 public class Evaluator{
 
-    int K;
-
-    public Evaluator(int K){
-        this.K=K;
-    }
-
-    public void evaluatePerformance(List<UserRecord> fullDataset , TextArea logArea){
+    public void evaluatePerformance(int K, List<UserRecord> fullDataset , TextArea logArea){
 
         Collections.shuffle(fullDataset); //Shuffle dataset to be sure dataset is all random
 

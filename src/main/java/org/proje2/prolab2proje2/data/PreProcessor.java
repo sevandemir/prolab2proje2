@@ -1,30 +1,19 @@
 package org.proje2.prolab2proje2.data;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class PreProcessor{
     
     public void dataCleaner(ArrayList<UserRecord> userRecordList){ //Pass a ArrayList of UserRecord's = userRecordList
 
-        if(userRecordList.isEmpty()){return;}
-
-        Iterator<UserRecord> iterator=userRecordList.iterator(); // Create a UserRecord iterator and iterate through userRecordList
-
-        while(iterator.hasNext()){ //If next exists
-
-            UserRecord record=iterator.next(); //Go to next item / Start from 0th index (default start = -1)
-
-            //Delete item if: 
-            if(record.getCategory()==null || record.getGender()==null ||record.getLineNetTotal()<=0 || record.getClientCode()<=0){
-                iterator.remove(); //Remove item 
-            }
-        }
+        userRecordList.removeIf(record->record==DataLoader.INVALID_USER_RECORD_TEMPLATE //Check for Invalid templates first to speed up the process
+            || record.getLineNetTotal()<=0.0 //Logic error : Money spent cant be 0 or negative
+            || record.getClientCode()<=0 //Logic error : Client code cant be 0 or negative 
+            || (!"K".equalsIgnoreCase(record.getGender().trim()) && !"E".equalsIgnoreCase(record.getGender().trim())) //IF gender is not equal to "K/k - E/e" - Yoda condition :D
+        );
     }
 
     public void genderEncoder(ArrayList<UserRecord> userRecordList){ //Pass a ArrayList of UserRecord's = userRecordList
-
-        if(userRecordList.isEmpty()){return;}
 
         for(UserRecord record : userRecordList){ //Iterate through userRecordList
 
@@ -42,26 +31,22 @@ public class PreProcessor{
     
         double max=Double.MIN_VALUE; //Initialize with min value to find bigger one
         double min=Double.MAX_VALUE; //Initialize with max vlaue to find smaller one
-        double currentTotal=0; 
+        double currentLineNetTotal=0; 
 
         for(UserRecord record : userRecordList){ //Iterate through userRecordList
 
-            currentTotal = record.getLineNetTotal();
+            currentLineNetTotal = record.getLineNetTotal();
 
-            if(currentTotal>max){max=currentTotal;} //Find max
-            if(currentTotal<min){min=currentTotal;} //Find min
+            if(currentLineNetTotal>max){max=currentLineNetTotal;} //Find max
+            if(currentLineNetTotal<min){min=currentLineNetTotal;} //Find min
         }
 
-        for(UserRecord record : userRecordList){
+        for(UserRecord record : userRecordList){ //Start normalization process
 
-            currentTotal=record.getLineNetTotal();
-            
-            if(min==max){record.setNormalizedLineTotal(0.0);} //If min==max;
+            currentLineNetTotal=record.getLineNetTotal();
 
-            else{
-                double normalizedLineTotal=(currentTotal-min)/(max-min); //Normalization formula scaling to 0-1
-                record.setNormalizedLineTotal(normalizedLineTotal); //Set normalizedLineTotal
-            }   
+            double normalizedLineTotal=(currentLineNetTotal-min)/(max-min); //Normalization formula scaling to 0-1
+            record.setNormalizedLineTotal(normalizedLineTotal); //Set normalizedLineTotal
         }
     }
 }

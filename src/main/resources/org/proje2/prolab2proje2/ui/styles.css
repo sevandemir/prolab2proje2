@@ -1,24 +1,138 @@
-/* Butonlara modern bir hava katalım */
-.button {
-    -fx-font-size: 14px;
-    font-size: 14px;
+.root {
+    -fx-base: #1e1e1e;
+    -fx-accent: #00ff88;
+    -fx-default-button: #00ff88;
+    -fx-focus-color: #00ff88;
+    -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+.sidebar {
+    -fx-background-color: #252526;
+    -fx-padding: 20;
+    -fx-border-color: #333333;
+    -fx-border-width: 0 1 0 0;
+}
+
+.header {
+    -fx-background-color: linear-gradient(to right, #252526, #2d2d30);
+    -fx-padding: 15;
+    -fx-border-color: #333333;
+    -fx-border-width: 0 0 1 0;
+}
+
+.title-text {
+    -fx-fill: white;
+    -fx-font-size: 20px;
     -fx-font-weight: bold;
-    font-weight: bold;
-    -fx-cursor: hand;
-    cursor: pointer;
+}
+
+.button {
+    -fx-background-color: #333333;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20;
     -fx-background-radius: 5;
+    -fx-cursor: hand;
 }
 
-/* Sadece yeşil butona özel hover (üzerine gelince) efekti */
 .button:hover {
-    -fx-opacity: 0.8;
-    opacity: 0.8;
+    -fx-background-color: #444444;
 }
 
-/* Metin kutusunun (Console) yazı tipini hacker/terminal tarzı yapalım */
+.button-primary {
+    -fx-background-color: #00ff88;
+    -fx-text-fill: #1e1e1e;
+}
+
+.button-primary:hover {
+    -fx-background-color: #00cc6e;
+}
+
+.text-field {
+    -fx-background-color: #333333;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #888888;
+    -fx-background-radius: 5;
+    -fx-border-color: #444444;
+    -fx-border-radius: 5;
+}
+
+.text-field:focused {
+    -fx-border-color: #00ff88;
+}
+
+.label {
+    -fx-text-fill: #cccccc;
+}
+
+.label-header {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.chart {
+    -fx-padding: 10;
+    -fx-background-color: #252526;
+    -fx-background-radius: 10;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: #333333;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: #333333;
+}
+
+.axis {
+    -fx-tick-label-fill: #888888;
+    -fx-tick-mark-stroke: #444444;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: #252526;
+}
+
+.tab {
+    -fx-background-color: #2d2d30;
+    -fx-background-radius: 5 5 0 0;
+    -fx-padding: 5 15;
+}
+
+.tab:selected {
+    -fx-background-color: #3e3e42;
+    -fx-border-color: #00ff88;
+    -fx-border-width: 0 0 2 0;
+}
+
+.tab .tab-label {
+    -fx-text-fill: #cccccc;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: #00ff88;
+}
+
 .text-area {
-    -fx-font-family: "Consolas", monospace;
-    font-family: "Consolas", monospace;
     -fx-control-inner-background: #1e1e1e;
-    -fx-text-fill: #00ff00; /* Terminal yeşili */
+    -fx-text-fill: #00ff88;
+    -fx-font-family: "Consolas", "Monospace";
+}
+
+.card {
+    -fx-background-color: #2d2d30;
+    -fx-background-radius: 10;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 4);
+}
+
+.stat-value {
+    -fx-text-fill: #00ff88;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
 }

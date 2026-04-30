@@ -11,20 +11,47 @@ public class DecisionTreeAlgorithm implements IClassifier{
 
     private DecisionTreeNode rootNode;
     private List<UserRecord> dataSet;
+    private int maxDepth = 2; // Default depth
+
+    public DecisionTreeAlgorithm() {}
+
+    public DecisionTreeAlgorithm(int maxDepth) {
+        this.maxDepth = maxDepth;
+    }
 
     @Override
     public void trainModel(List<UserRecord> trainingDateset){
-        
-        dataSet=trainingDateset;
+        dataSet = trainingDateset;
+        rootNode = buildTree(trainingDateset, 0);
+    }
 
-        List<UserRecord> maleList=splitDatasetByGender("E", trainingDateset); //Create males list by splitting training Dataset
-        List<UserRecord> femaleList=splitDatasetByGender("K", trainingDateset); //Create females list by splitting training Dataset
+    private DecisionTreeNode buildTree(List<UserRecord> data, int currentDepth) {
+        // Base case: Leaf node if depth reached or data is pure/empty
+        if (currentDepth >= maxDepth || data.isEmpty()) {
+            return CreateLeafNode(data);
+        }
 
-        DecisionTreeNode maleBranch=CreateSpendingBranches(maleList); //Create males branch according to spending
-        DecisionTreeNode femaleBranch=CreateSpendingBranches(femaleList); //Create males branch according to spending
+        // Depth 0: Split by Gender
+        if (currentDepth == 0) {
+            List<UserRecord> maleList = splitDatasetByGender("E", data);
+            List<UserRecord> femaleList = splitDatasetByGender("K", data);
+            
+            return new DecisionTreeNode("Gender", 
+                buildTree(maleList, currentDepth + 1), 
+                buildTree(femaleList, currentDepth + 1));
+        } 
+        // Depth 1: Split by Spending
+        else if (currentDepth == 1) {
+            List<UserRecord> highExpense = splitDatasetBySpending(data, true);
+            List<UserRecord> lowExpense = splitDatasetBySpending(data, false);
+            
+            return new DecisionTreeNode("LineNetTotal", 
+                buildTree(highExpense, currentDepth + 1), 
+                buildTree(lowExpense, currentDepth + 1));
+        }
 
-        rootNode=new DecisionTreeNode("Gender",maleBranch,femaleBranch); //Root splits to left:Male right:Female branches
-    }   
+        return CreateLeafNode(data);
+    }
 
     @Override
     public String predictCategory(UserRecord targetRecord){

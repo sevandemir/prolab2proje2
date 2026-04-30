@@ -1,5 +1,6 @@
 package org.proje2.prolab2proje2.eval;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -11,8 +12,8 @@ import javafx.scene.control.TextArea;
 
 public class Evaluator{
 
-    public void evaluatePerformance(int K, List<UserRecord> fullDataset , TextArea logArea){
-
+    public List<EvaluationResult> evaluatePerformance(int K, int maxDepth, List<UserRecord> fullDataset , TextArea logArea){
+        List<EvaluationResult> results = new ArrayList<>();
         Collections.shuffle(fullDataset); //Shuffle dataset to be sure dataset is all random
 
         int splitPoint = (int)(fullDataset.size()*0.8); //Split dataset %80 training - %20 testing
@@ -21,7 +22,7 @@ public class Evaluator{
         List<UserRecord> testData=fullDataset.subList(splitPoint,fullDataset.size()); //Testing dataset(%20 of full database)
 
         //Decision Tree Algorithm 
-        DecisionTreeAlgorithm DecisionTree = new DecisionTreeAlgorithm(); //Create new Decision Tree
+        DecisionTreeAlgorithm DecisionTree = new DecisionTreeAlgorithm(maxDepth); //Create new Decision Tree with user depth
         DecisionTree.trainModel(trainingData); //Train model with training data
 
         long decisionTreeStartTime = System.nanoTime(); //Decision Tree starting time
@@ -52,16 +53,20 @@ public class Evaluator{
 
         Long KNNAlgorithmFinishTime=System.nanoTime(); //KNN finishing time
 
-        printTestResults("KNN Algorithm", KNNAlgorithmStartTime, KNNAlgorithmFinishTime, KNNAlgorithmCorrectPredictions, testData.size(), logArea); //Print out KNN algorithm results
-        printTestResults("Decision Tree Algorithm", decisionTreeStartTime, decisionTreeFinishTime, decisionTreeCorrectPredictions, testData.size() , logArea); //Print out Decision Tree results 
+        results.add(calculateResult("KNN Algorithm", KNNAlgorithmStartTime, KNNAlgorithmFinishTime, KNNAlgorithmCorrectPredictions, testData.size(), logArea)); //Print out KNN algorithm results
+        results.add(calculateResult("Decision Tree Algorithm", decisionTreeStartTime, decisionTreeFinishTime, decisionTreeCorrectPredictions, testData.size() , logArea)); //Print out Decision Tree results 
+        
+        return results;
     }
 
-    private void printTestResults(String name, long startTime, long endTime, int correctPredictions, int totalData, TextArea logArea){
+    private EvaluationResult calculateResult(String name, long startTime, long endTime, int correctPredictions, int totalData, TextArea logArea){
 
         double predictionAccuracy=(double)correctPredictions/ (double)totalData * 100.00; //Double casting to make double dividing(Not integer dividing) and in % type
         double predictionDuration= (endTime-startTime) / (1_000_000.0); //Format nanoseconds to miliseconds for better readability
 
-        logArea.appendText(name + " Prediction Accuracy: " + String.format("%.2f", predictionAccuracy)+"\n"); //Format accuracy to 2 numbers after . 
+        logArea.appendText(name + " Prediction Accuracy: " + String.format("%.2f", predictionAccuracy)+"%\n"); //Format accuracy to 2 numbers after . 
         logArea.appendText(name + " Prediction Duration: " + String.format("%.4f", predictionDuration)+ "ms\n"); //Format duration to 4 numbers after . 
+        
+        return new EvaluationResult(name, predictionAccuracy, predictionDuration);
     }
 }

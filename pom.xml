@@ -29,6 +29,16 @@
       <artifactId>javafx-fxml</artifactId>
       <version>21.0.6</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.20.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.20.0</version>
+    </dependency>
 <dependency>
       <groupId>com.dlsc.formsfx</groupId>
       <artifactId>formsfx-core</artifactId>
@@ -60,8 +70,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.13.0</version>
         <configuration>
-          <source>25</source>
-          <target>25</target>
+          <source>21</source>
+          <target>21</target>
         </configuration>
       </plugin>
       <plugin>
@@ -73,7 +83,10 @@
             <!-- Default configuration for running with: mvn clean javafx:run -->
             <id>default-cli</id>
             <configuration>
-              <mainClass>org.proje2.prolab2proje2/org.proje2.prolab2proje2.HelloApplication</mainClass>
+              <mainClass>org.proje2.prolab2proje2/org.proje2.prolab2proje2.ui.MainApp</mainClass>
+              <options>
+                <option>-Xmx2048m</option>
+              </options>
               <launcher>app</launcher>
               <jlinkZipName>app</jlinkZipName>
               <jlinkImageName>app</jlinkImageName>

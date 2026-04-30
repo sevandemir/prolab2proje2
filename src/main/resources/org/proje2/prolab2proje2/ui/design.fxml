@@ -3,39 +3,147 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.text.Text?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="org.proje2.prolab2proje2.ui.MainController">
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="org.proje2.prolab2proje2.ui.MainController"
+            styleClass="root">
     
     <top>
-        <VBox alignment="CENTER" style="-fx-background-color: #2c3e50; -fx-padding: 20;">
-            <Label text="Makine Öğrenmesi Algoritma Kıyaslama" 
-                   style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;"/>
-        </VBox>
+        <HBox alignment="CENTER_LEFT" styleClass="header" spacing="20">
+            <padding>
+                <Insets left="20" right="20" top="10" bottom="10"/>
+            </padding>
+            <Text text="ML Performance Benchmarker" styleClass="title-text"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: #888888;"/>
+        </HBox>
     </top>
 
     <left>
-        <VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #ecf0f1;">
-            <Label text="Kontrol Paneli" style="-fx-font-weight: bold;"/>
-            <Button text="Dataset Yükle" prefWidth="150"/>
-            <Button text="Testi Başlat" onAction="#handleStartTest" 
-                    style="-fx-background-color: #27ae60; -fx-text-fill: white;" prefWidth="150"/>
-            <Separator/>
-            <Label text="Parametreler"/>
-            <HBox spacing="5" alignment="CENTER_LEFT">
-                <Label text="K Değeri:"/>
-                <TextField fx:id="kValueField" text="5" prefWidth="50"/>
-            </HBox>
+        <VBox spacing="20" styleClass="sidebar" prefWidth="250">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+            
+            <VBox spacing="10">
+                <Label text="CONFIGURATION" styleClass="label-header"/>
+                <Separator style="-fx-opacity: 0.2;"/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Dataset File"/>
+                <HBox spacing="5">
+                    <TextField fx:id="filePathField" editable="false" text="MarketSalesKocaeli.xlsx" HBox.hgrow="ALWAYS"/>
+                    <Button text="..." onAction="#handleSelectFile"/>
+                </HBox>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="K-Value (for KNN)"/>
+                <TextField fx:id="kValueField" text="5" promptText="Enter K value..."/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Max Depth (for DT)"/>
+                <TextField fx:id="maxDepthField" text="2" promptText="Enter Max Depth..."/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Actions"/>
+                <Button text="Run Benchmarks" onAction="#handleStartTest" 
+                        styleClass="button-primary" maxWidth="Infinity"/>
+                <Button text="Clear All" onAction="#handleClearResults" 
+                        maxWidth="Infinity"/>
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS" />
+            
+            <VBox spacing="5" styleClass="card">
+                <Label text="Last Run Avg. Accuracy" style="-fx-font-size: 10px;"/>
+                <Label fx:id="avgAccuracyLabel" text="0.0%" styleClass="stat-value"/>
+            </VBox>
         </VBox>
     </left>
 
     <center>
-        <VBox spacing="10" style="-fx-padding: 20;">
-            <Label text="Analiz Sonuçları" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
-            <TextArea fx:id="logArea" VBox.vgrow="ALWAYS" editable="false" 
-                      style="-fx-font-family: 'Monospaced'; -fx-font-size: 14px;" 
-                      promptText="Sonuçlar burada görüntülenecek..."/>
-        </VBox>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+            <tabs>
+                <Tab text="Dashboard">
+                    <VBox spacing="20">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+                        <HBox spacing="20" alignment="CENTER" VBox.vgrow="ALWAYS">
+                            <BarChart fx:id="accuracyChart" title="Accuracy Comparison (%)" animated="true">
+                                <xAxis><CategoryAxis label="Algorithm" /></xAxis>
+                                <yAxis><NumberAxis label="Accuracy %" lowerBound="0" upperBound="100" autoRanging="false" /></yAxis>
+                            </BarChart>
+                            <BarChart fx:id="durationChart" title="Execution Time (ms)" animated="true">
+                                <xAxis><CategoryAxis label="Algorithm" /></xAxis>
+                                <yAxis><NumberAxis label="Time (ms)" /></yAxis>
+                            </BarChart>
+                        </HBox>
+                    </VBox>
+                </Tab>
+
+                <Tab text="Individual Prediction">
+                    <VBox spacing="20">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+                        <Label text="Predict Category for User" styleClass="label-header"/>
+                        
+                        <GridPane hgap="15" vgap="15" styleClass="card">
+                            <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+                            
+                            <Label text="Gender:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <ComboBox fx:id="genderComboBox" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                        <String fx:value="E (Erkek)"/>
+                                        <String fx:value="K (Kadın)"/>
+                                    </FXCollections>
+                                </items>
+                                <value>
+                                    <String fx:value="E (Erkek)"/>
+                                </value>
+                            </ComboBox>
+
+                            <Label text="Spending Amount:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <TextField fx:id="spendingField" text="100.0" promptText="e.g. 250.5" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                            <Button text="Predict Now" onAction="#handleSinglePrediction" 
+                                    styleClass="button-primary" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        </GridPane>
+
+                        <HBox spacing="20">
+                            <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
+                                <Label text="KNN Prediction" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="knnResultLabel" text="N/A" styleClass="stat-value" style="-fx-text-fill: #3498db;"/>
+                            </VBox>
+                            <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
+                                <Label text="Decision Tree Prediction" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="dtResultLabel" text="N/A" styleClass="stat-value" style="-fx-text-fill: #e67e22;"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </Tab>
+
+                <Tab text="System Logs">
+                    <VBox spacing="10">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+                        <TextArea fx:id="logArea" VBox.vgrow="ALWAYS" editable="false" 
+                                  promptText="System output will appear here..."/>
+                    </VBox>
+                </Tab>
+            </tabs>
+        </TabPane>
     </center>
 
 </BorderPane>

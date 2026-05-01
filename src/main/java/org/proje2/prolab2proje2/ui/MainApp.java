@@ -23,7 +23,6 @@ public class MainApp extends Application {
         // 4. CSS dosyasını bağlıyoruz (Daha sonra güzelleştirmek için)
         String css = getClass().getResource("/org/proje2/prolab2proje2/ui/styles.css").toExternalForm();
         scene.getStylesheets().add(css);
-
         // 5. Pencere ayarları
         primaryStage.setTitle("Prolab 2 - Algoritma Performans Analizi");
         primaryStage.setScene(scene);

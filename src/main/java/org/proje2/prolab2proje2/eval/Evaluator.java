@@ -10,63 +10,84 @@ import org.proje2.prolab2proje2.data.UserRecord;
 
 import javafx.scene.control.TextArea;
 
-public class Evaluator{
+public class Evaluator {
 
-    public List<EvaluationResult> evaluatePerformance(int K, int maxDepth, List<UserRecord> fullDataset , TextArea logArea){
+    public List<EvaluationResult> evaluatePerformance(int K, int maxDepth, List<UserRecord> fullDataset, TextArea logArea) {
         List<EvaluationResult> results = new ArrayList<>();
-        Collections.shuffle(fullDataset); //Shuffle dataset to be sure dataset is all random
+        Collections.shuffle(fullDataset); // Shuffle dataset to ensure randomness
 
-        int splitPoint = (int)(fullDataset.size()*0.8); //Split dataset %80 training - %20 testing
+        int splitPoint = (int) (fullDataset.size() * 0.8); // Split dataset: 80% training, 20% testing
 
-        List<UserRecord> trainingData=fullDataset.subList(0, splitPoint); //Training dataset(%80 of full database)
-        List<UserRecord> testData=fullDataset.subList(splitPoint,fullDataset.size()); //Testing dataset(%20 of full database)
+        List<UserRecord> trainingData = new ArrayList<>(fullDataset.subList(0, splitPoint));
+        List<UserRecord> testData = new ArrayList<>(fullDataset.subList(splitPoint, fullDataset.size()));
 
-        //Decision Tree Algorithm 
-        DecisionTreeAlgorithm DecisionTree = new DecisionTreeAlgorithm(maxDepth); //Create new Decision Tree with user depth
-        DecisionTree.trainModel(trainingData); //Train model with training data
+        return evaluatePerformanceSeparate(K, maxDepth, trainingData, testData, logArea);
+    }
 
-        long decisionTreeStartTime = System.nanoTime(); //Decision Tree starting time
+    public List<EvaluationResult> evaluatePerformanceSeparate(int K, int maxDepth, List<UserRecord> trainingData, List<UserRecord> testData, TextArea logArea) {
+        List<EvaluationResult> results = new ArrayList<>();
 
-        int decisionTreeCorrectPredictions=0; //Correct predictions of Decision Tree model
+        // --- KNN Algorithm ---
+        Runtime.getRuntime().gc(); // Suggest Garbage Collector
+        long knnMemBefore = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long knnStartTime = System.nanoTime();
 
-        for(UserRecord userRecord :testData){ //Take each user record from testing data 
+        KNNAlgorithm knn = new KNNAlgorithm(K);
+        knn.trainModel(trainingData);
 
-            if(userRecord.getCategory().equalsIgnoreCase(DecisionTree.predictCategory(userRecord))){ //Compare predictions and real category
-                decisionTreeCorrectPredictions++; //Increment correct predictions if guessed correct
+        int knnCorrect = 0;
+        ConfusionMatrix knnMatrix = new ConfusionMatrix();
+        for (UserRecord record : testData) {
+            String actual = record.getCategory();
+            String predicted = knn.predictCategory(record);
+            knnMatrix.addPrediction(actual, predicted);
+            if (actual != null && actual.equalsIgnoreCase(predicted)) {
+                knnCorrect++;
             }
         }
-        long decisionTreeFinishTime=System.nanoTime(); //Decision tree finishing time
+        long knnEndTime = System.nanoTime();
+        long knnMemAfter = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        double knnMemoryUsedMB = Math.max(0, (knnMemAfter - knnMemBefore) / (1024.0 * 1024.0));
 
-        //KNN Algorithm
-        KNNAlgorithm KNNAlgorithm = new KNNAlgorithm(K); //Create KNN model
-        KNNAlgorithm.trainModel(trainingData); //Train model with training data
+        results.add(calculateResult("KNN Algorithm", knnStartTime, knnEndTime, knnCorrect, testData.size(), knnMemoryUsedMB, knnMatrix, logArea));
 
-        long KNNAlgorithmStartTime = System.nanoTime(); //KNN starting time
+        // --- Decision Tree Algorithm ---
+        Runtime.getRuntime().gc(); // Suggest Garbage Collector
+        long dtMemBefore = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long dtStartTime = System.nanoTime();
 
-        int KNNAlgorithmCorrectPredictions=0; //Correct predictions of KNN model
+        DecisionTreeAlgorithm dt = new DecisionTreeAlgorithm(maxDepth);
+        dt.trainModel(trainingData);
 
-        for(UserRecord userRecord : testData){ //Take each user record from testing data
-            if(userRecord.getCategory().equalsIgnoreCase(KNNAlgorithm.predictCategory(userRecord))){ //Compare predictions and real category
-                KNNAlgorithmCorrectPredictions++; //Increment correct predictions if guessed correct
+        int dtCorrect = 0;
+        ConfusionMatrix dtMatrix = new ConfusionMatrix();
+        for (UserRecord record : testData) {
+            String actual = record.getCategory();
+            String predicted = dt.predictCategory(record);
+            dtMatrix.addPrediction(actual, predicted);
+            if (actual != null && actual.equalsIgnoreCase(predicted)) {
+                dtCorrect++;
             }
         }
+        long dtEndTime = System.nanoTime();
+        long dtMemAfter = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        double dtMemoryUsedMB = Math.max(0, (dtMemAfter - dtMemBefore) / (1024.0 * 1024.0));
 
-        Long KNNAlgorithmFinishTime=System.nanoTime(); //KNN finishing time
+        results.add(calculateResult("Decision Tree Algorithm", dtStartTime, dtEndTime, dtCorrect, testData.size(), dtMemoryUsedMB, dtMatrix, logArea));
 
-        results.add(calculateResult("KNN Algorithm", KNNAlgorithmStartTime, KNNAlgorithmFinishTime, KNNAlgorithmCorrectPredictions, testData.size(), logArea)); //Print out KNN algorithm results
-        results.add(calculateResult("Decision Tree Algorithm", decisionTreeStartTime, decisionTreeFinishTime, decisionTreeCorrectPredictions, testData.size() , logArea)); //Print out Decision Tree results 
-        
         return results;
     }
 
-    private EvaluationResult calculateResult(String name, long startTime, long endTime, int correctPredictions, int totalData, TextArea logArea){
+    private EvaluationResult calculateResult(String name, long startTime, long endTime, int correctPredictions, int totalData, double memoryUsedMB, ConfusionMatrix matrix, TextArea logArea) {
+        double accuracy = totalData == 0 ? 0 : (double) correctPredictions / (double) totalData * 100.0;
+        double durationMs = (endTime - startTime) / 1_000_000.0;
 
-        double predictionAccuracy=(double)correctPredictions/ (double)totalData * 100.00; //Double casting to make double dividing(Not integer dividing) and in % type
-        double predictionDuration= (endTime-startTime) / (1_000_000.0); //Format nanoseconds to miliseconds for better readability
+        logArea.appendText("\n=== " + name + " ===\n");
+        logArea.appendText(String.format("Accuracy: %.2f%%\n", accuracy));
+        logArea.appendText(String.format("Duration: %.2f ms\n", durationMs));
+        logArea.appendText(String.format("Memory Used: %.4f MB\n", memoryUsedMB));
+        logArea.appendText("\nConfusion Matrix:\n" + matrix.toString());
 
-        logArea.appendText(name + " Prediction Accuracy: " + String.format("%.2f", predictionAccuracy)+"%\n"); //Format accuracy to 2 numbers after . 
-        logArea.appendText(name + " Prediction Duration: " + String.format("%.4f", predictionDuration)+ "ms\n"); //Format duration to 4 numbers after . 
-        
-        return new EvaluationResult(name, predictionAccuracy, predictionDuration);
+        return new EvaluationResult(name, accuracy, durationMs, memoryUsedMB, matrix);
     }
 }

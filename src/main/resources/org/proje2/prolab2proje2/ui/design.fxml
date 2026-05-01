@@ -35,11 +35,36 @@
             </VBox>
 
             <VBox spacing="5">
+                <Label text="Dataset Mode"/>
+                <RadioButton fx:id="radioSingleFile" text="Single File" selected="true">
+                    <toggleGroup><ToggleGroup fx:id="dataModeGroup"/></toggleGroup>
+                </RadioButton>
+                <RadioButton fx:id="radioSeparateFiles" text="Separate Train/Test Files" toggleGroup="$dataModeGroup"/>
+            </VBox>
+
+            <VBox fx:id="singleFileBox" spacing="5">
                 <Label text="Dataset File"/>
                 <HBox spacing="5">
                     <TextField fx:id="filePathField" editable="false" text="MarketSalesKocaeli.xlsx" HBox.hgrow="ALWAYS"/>
                     <Button text="..." onAction="#handleSelectFile"/>
                 </HBox>
+            </VBox>
+
+            <VBox fx:id="separateFilesBox" spacing="5" visible="false" managed="false">
+                <VBox spacing="5">
+                    <Label text="Training File"/>
+                    <HBox spacing="5">
+                        <TextField fx:id="trainPathField" editable="false" promptText="Select Train data..." HBox.hgrow="ALWAYS"/>
+                        <Button text="..." onAction="#handleSelectTrainFile"/>
+                    </HBox>
+                </VBox>
+                <VBox spacing="5">
+                    <Label text="Testing File"/>
+                    <HBox spacing="5">
+                        <TextField fx:id="testPathField" editable="false" promptText="Select Test data..." HBox.hgrow="ALWAYS"/>
+                        <Button text="..." onAction="#handleSelectTestFile"/>
+                    </HBox>
+                </VBox>
             </VBox>
 
             <VBox spacing="5">
@@ -78,20 +103,24 @@
                             <Insets top="20" right="20" bottom="20" left="20"/>
                         </padding>
                         <HBox spacing="20" alignment="CENTER" VBox.vgrow="ALWAYS">
-                            <BarChart fx:id="accuracyChart" title="Accuracy Comparison (%)" animated="true">
+                            <BarChart fx:id="accuracyChart" title="Accuracy (%)" animated="true">
                                 <xAxis><CategoryAxis label="Algorithm" /></xAxis>
                                 <yAxis><NumberAxis label="Accuracy %" lowerBound="0" upperBound="100" autoRanging="false" /></yAxis>
                             </BarChart>
-                            <BarChart fx:id="durationChart" title="Execution Time (ms)" animated="true">
+                            <BarChart fx:id="durationChart" title="Time (ms)" animated="true">
                                 <xAxis><CategoryAxis label="Algorithm" /></xAxis>
                                 <yAxis><NumberAxis label="Time (ms)" /></yAxis>
+                            </BarChart>
+                            <BarChart fx:id="memoryChart" title="Memory Used (MB)" animated="true">
+                                <xAxis><CategoryAxis label="Algorithm" /></xAxis>
+                                <yAxis><NumberAxis label="MB" /></yAxis>
                             </BarChart>
                         </HBox>
                     </VBox>
                 </Tab>
 
                 <Tab text="Individual Prediction">
-                    <VBox spacing="20">
+                    <VBox spacing="10">
                         <padding>
                             <Insets top="20" right="20" bottom="20" left="20"/>
                         </padding>
@@ -130,10 +159,16 @@
                                 <Label fx:id="dtResultLabel" text="N/A" styleClass="stat-value" style="-fx-text-fill: #e67e22;"/>
                             </VBox>
                         </HBox>
+
+                        <VBox spacing="5" VBox.vgrow="ALWAYS">
+                            <Label text="Tahmin Detayları ve Algoritma Yolları" styleClass="label-header"/>
+                            <TextArea fx:id="predictionLogArea" editable="false" prefHeight="200" VBox.vgrow="ALWAYS"
+                                      promptText="KNN komşuları ve Decision Tree dallanma yolları burada gösterilecektir..."/>
+                        </VBox>
                     </VBox>
                 </Tab>
 
-                <Tab text="System Logs">
+                <Tab text="System Logs &amp; Matrix">
                     <VBox spacing="10">
                         <padding>
                             <Insets top="20" right="20" bottom="20" left="20"/>

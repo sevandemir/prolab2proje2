@@ -4,15 +4,11 @@ public class EvaluationResult {
     private final String algorithmName;
     private final double accuracy;
     private final double durationMs;
-    private final double memoryUsedMB;
-    private final ConfusionMatrix confusionMatrix;
 
-    public EvaluationResult(String algorithmName, double accuracy, double durationMs, double memoryUsedMB, ConfusionMatrix confusionMatrix) {
+    public EvaluationResult(String algorithmName, double accuracy, double durationMs) {
         this.algorithmName = algorithmName;
         this.accuracy = accuracy;
         this.durationMs = durationMs;
-        this.memoryUsedMB = memoryUsedMB;
-        this.confusionMatrix = confusionMatrix;
     }
 
     public String getAlgorithmName() {
@@ -25,13 +21,5 @@ public class EvaluationResult {
 
     public double getDurationMs() {
         return durationMs;
-    }
-
-    public double getMemoryUsedMB() {
-        return memoryUsedMB;
-    }
-
-    public ConfusionMatrix getConfusionMatrix() {
-        return confusionMatrix;
     }
 }

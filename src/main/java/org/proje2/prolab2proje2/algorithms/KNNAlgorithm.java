@@ -9,40 +9,39 @@ import java.util.Comparator;
 import org.proje2.prolab2proje2.data.PreProcessor;
 import org.proje2.prolab2proje2.data.UserRecord;
 
-public class KNNAlgorithm extends BaseAlgorithm {
+public class KNNAlgorithm implements IClassifier{
 
+    private List<UserRecord> dataSet;
     private int k;
-    private List<UserRecord> lastNeighbours;
 
     public KNNAlgorithm(int k){
         this.k = k; //Class' own K and parameter K
     }
 
-    public List<UserRecord> getLastNeighbours() {
-        return lastNeighbours;
+    @Override
+    public void trainModel(List<UserRecord> trainingDataset){
+
+        dataSet = trainingDataset;
     }
 
     @Override
     public String predictCategory(UserRecord targetRecord){
-        if (dataSet == null || dataSet.isEmpty()) {
-            return "Unknown";
-        }
-        this.lastNeighbours = calculateKNearestNeighbours(targetRecord, dataSet, k);
-        return predictCategoryByFrequency(lastNeighbours);
+        
+        List<UserRecord> neighbourList = calculateKNearestNeighbours(targetRecord, dataSet, k);
+        return predictCategoryByFrequency(neighbourList);
     }
 
     private double calculateEuclidDistance(UserRecord firstRecord , UserRecord secondRecord){
+
         double genderDifferenceScore=Math.pow(firstRecord.getEncodedGender()-secondRecord.getEncodedGender(),2); // (x1-x2)²
+
         double normalizedLineTotalScore=Math.pow(firstRecord.getNormalizedLineTotal()-secondRecord.getNormalizedLineTotal(),2); //(y1-y2)²
 
         return Math.sqrt(normalizedLineTotalScore+genderDifferenceScore); //sqrt(a+b)
     }   
 
-    public double getEuclidDistance(UserRecord firstRecord, UserRecord secondRecord) {
-        return calculateEuclidDistance(firstRecord, secondRecord);
-    }
-
     public List<UserRecord> calculateKNearestNeighbours(UserRecord targetRecord , List <UserRecord> allUserRecords , int K){
+
         List <UserRecord> KNeighbourList;
     
         KNeighbourList=allUserRecords.stream()//Iterate in whole list with stream                                     //Filter eliminates all items which doesnt fulfill the condition
@@ -55,6 +54,7 @@ public class KNNAlgorithm extends BaseAlgorithm {
     }
 
     public String predictCategoryByFrequency(List <UserRecord> KNeighbours){
+
         String predictedCategory;
 
         Map <String,Long> categoryCounts=KNeighbours.stream()
@@ -70,6 +70,7 @@ public class KNNAlgorithm extends BaseAlgorithm {
     }
 
     public String predictCategoryForUserInputWithKNN(String genderInput, Double lineNetTotalInput, int kInput){
+
         String predictedCategoryForUser;
 
         int encodedGenderInput=PreProcessor.encodeGenderFromUserInput(genderInput);
@@ -79,11 +80,10 @@ public class KNNAlgorithm extends BaseAlgorithm {
         inputRecord.setEncodedGender(encodedGenderInput);
         inputRecord.setNormalizedLineTotal(normalizedLineNetTotalInput);
 
-        KNNAlgorithm knn = new KNNAlgorithm(kInput); 
-        knn.trainModel(dataSet);
+        KNNAlgorithm KNNAlgorithm = new KNNAlgorithm(kInput); 
+        KNNAlgorithm.trainModel(dataSet);
 
-        predictedCategoryForUser=knn.predictCategory(inputRecord);
-        this.lastNeighbours = knn.getLastNeighbours();
+        predictedCategoryForUser=KNNAlgorithm.predictCategory(inputRecord);
 
         return predictedCategoryForUser;
     }

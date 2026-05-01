@@ -121,7 +121,7 @@
 .text-area {
     -fx-control-inner-background: #1e1e1e;
     -fx-text-fill: #00ff88;
-    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-family: "Consolas", "Monospace";
 }
 
 .card {

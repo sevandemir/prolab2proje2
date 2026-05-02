@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- Main JavaFX UI layout design for the performance benchmarker application -->
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
@@ -12,6 +13,7 @@
             fx:controller="org.proje2.prolab2proje2.ui.MainController"
             styleClass="root">
     
+    <!-- Top Header Title Section -->
     <top>
         <HBox alignment="CENTER_LEFT" styleClass="header" spacing="20">
             <padding>
@@ -23,6 +25,7 @@
         </HBox>
     </top>
 
+    <!-- Sidebar Configuration Controls -->
     <left>
         <VBox spacing="20" styleClass="sidebar" prefWidth="250">
             <padding>
@@ -34,7 +37,17 @@
                 <Separator style="-fx-opacity: 0.2;"/>
             </VBox>
 
+            <!-- Mode Selector: Single File or Split Files -->
             <VBox spacing="5">
+                <Label text="Dataset Mode"/>
+                <RadioButton fx:id="radioSingleFile" text="Single File" selected="true">
+                    <toggleGroup><ToggleGroup fx:id="dataModeGroup"/></toggleGroup>
+                </RadioButton>
+                <RadioButton fx:id="radioSeparateFiles" text="Separate Train/Test Files" toggleGroup="$dataModeGroup"/>
+            </VBox>
+
+            <!-- Single File Mode Inputs -->
+            <VBox fx:id="singleFileBox" spacing="5">
                 <Label text="Dataset File"/>
                 <HBox spacing="5">
                     <TextField fx:id="filePathField" editable="false" text="MarketSalesKocaeli.xlsx" HBox.hgrow="ALWAYS"/>
@@ -42,16 +55,35 @@
                 </HBox>
             </VBox>
 
+            <!-- Separate File Mode Inputs -->
+            <VBox fx:id="separateFilesBox" spacing="5" visible="false" managed="false">
+                <VBox spacing="5">
+                    <Label text="Training File"/>
+                    <HBox spacing="5">
+                        <TextField fx:id="trainPathField" editable="false" promptText="Select Train data..." HBox.hgrow="ALWAYS"/>
+                        <Button text="..." onAction="#handleSelectTrainFile"/>
+                    </HBox>
+                </VBox>
+                <VBox spacing="5">
+                    <Label text="Testing File"/>
+                    <HBox spacing="5">
+                        <TextField fx:id="testPathField" editable="false" promptText="Select Test data..." HBox.hgrow="ALWAYS"/>
+                        <Button text="..." onAction="#handleSelectTestFile"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+
             <VBox spacing="5">
                 <Label text="K-Value (for KNN)"/>
-                <TextField fx:id="kValueField" text="5" promptText="Enter K value..."/>
+                <TextField fx:id="kValueField" text="25" promptText="Enter K value..."/>
             </VBox>
 
             <VBox spacing="5">
                 <Label text="Max Depth (for DT)"/>
-                <TextField fx:id="maxDepthField" text="2" promptText="Enter Max Depth..."/>
+                <TextField fx:id="maxDepthField" text="25" promptText="Enter Max Depth..."/>
             </VBox>
 
+            <!-- Form Action Buttons -->
             <VBox spacing="5">
                 <Label text="Actions"/>
                 <Button text="Run Benchmarks" onAction="#handleStartTest" 
@@ -69,29 +101,36 @@
         </VBox>
     </left>
 
+    <!-- Center Analytical Workspace Tabs -->
     <center>
         <TabPane tabClosingPolicy="UNAVAILABLE">
             <tabs>
+                <!-- Performance Metrics Dashboard Tab -->
                 <Tab text="Dashboard">
                     <VBox spacing="20">
                         <padding>
                             <Insets top="20" right="20" bottom="20" left="20"/>
                         </padding>
                         <HBox spacing="20" alignment="CENTER" VBox.vgrow="ALWAYS">
-                            <BarChart fx:id="accuracyChart" title="Accuracy Comparison (%)" animated="true">
+                            <BarChart fx:id="accuracyChart" title="Accuracy (%)" animated="true">
                                 <xAxis><CategoryAxis label="Algorithm" /></xAxis>
                                 <yAxis><NumberAxis label="Accuracy %" lowerBound="0" upperBound="100" autoRanging="false" /></yAxis>
                             </BarChart>
-                            <BarChart fx:id="durationChart" title="Execution Time (ms)" animated="true">
+                            <BarChart fx:id="durationChart" title="Time (ms)" animated="true">
                                 <xAxis><CategoryAxis label="Algorithm" /></xAxis>
                                 <yAxis><NumberAxis label="Time (ms)" /></yAxis>
+                            </BarChart>
+                            <BarChart fx:id="memoryChart" title="Memory Used (MB)" animated="true">
+                                <xAxis><CategoryAxis label="Algorithm" /></xAxis>
+                                <yAxis><NumberAxis label="MB" /></yAxis>
                             </BarChart>
                         </HBox>
                     </VBox>
                 </Tab>
 
+                <!-- Individual Target Prediction Tab -->
                 <Tab text="Individual Prediction">
-                    <VBox spacing="20">
+                    <VBox spacing="10">
                         <padding>
                             <Insets top="20" right="20" bottom="20" left="20"/>
                         </padding>
@@ -130,15 +169,22 @@
                                 <Label fx:id="dtResultLabel" text="N/A" styleClass="stat-value" style="-fx-text-fill: #e67e22;"/>
                             </VBox>
                         </HBox>
+
+                        <VBox spacing="5" VBox.vgrow="ALWAYS">
+                            <Label text="Tahmin Detayları ve Algoritma Yolları" styleClass="label-header"/>
+                            <TextArea fx:id="predictionLogArea" editable="false" prefHeight="200" VBox.vgrow="ALWAYS"
+                                      promptText="KNN komşuları ve Decision Tree dallanma yolları burada gösterilecektir..."/>
+                        </VBox>
                     </VBox>
                 </Tab>
 
-                <Tab text="System Logs">
+                <!-- Detailed Execution Output and Matrix Tab -->
+                <Tab text="System Logs &amp; Matrix">
                     <VBox spacing="10">
                         <padding>
                             <Insets top="20" right="20" bottom="20" left="20"/>
                         </padding>
-                        <TextArea fx:id="logArea" VBox.vgrow="ALWAYS" editable="false" 
+                        <TextArea fx:id="logArea" VBox.vgrow="ALWAYS" editable="false" prefHeight="400"
                                   promptText="System output will appear here..."/>
                     </VBox>
                 </Tab>

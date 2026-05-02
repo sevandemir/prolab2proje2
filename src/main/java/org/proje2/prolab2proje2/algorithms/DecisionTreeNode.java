@@ -9,6 +9,8 @@ public class DecisionTreeNode{
     boolean isLeaf; //Is last node at the branch?
     String resultCategory; //If last node at branch predicted category
 
+    double threshold; //Threshold for continuous splitting
+
     //Leaf Node Structure
     public DecisionTreeNode(String resultCategory){
         this.resultCategory=resultCategory;
@@ -17,8 +19,16 @@ public class DecisionTreeNode{
 
     //Branch Node Structure
     public DecisionTreeNode(String attribute , DecisionTreeNode leftNode , DecisionTreeNode rightNode){
-
         this.attribute=attribute;
+        this.leftNode=leftNode;
+        this.rightNode=rightNode;
+        this.isLeaf=false;
+    }
+
+    //Overloaded Branch Node Structure for dynamic thresholding
+    public DecisionTreeNode(String attribute , double threshold, DecisionTreeNode leftNode , DecisionTreeNode rightNode){
+        this.attribute=attribute;
+        this.threshold=threshold;
         this.leftNode=leftNode;
         this.rightNode=rightNode;
         this.isLeaf=false;

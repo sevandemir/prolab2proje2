@@ -1,10 +1,20 @@
 package org.proje2.prolab2proje2.eval;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
+/**
+ * ConfusionMatrix stores and displays the true vs predicted categorization results.
+ */
 public class ConfusionMatrix {
     private final Map<String, Map<String, Integer>> matrix = new TreeMap<>();
 
+    /**
+     * Records a single instance of actual vs predicted category prediction.
+     * @param actual The true category of the record.
+     * @param predicted The category predicted by the model.
+     */
     public void addPrediction(String actual, String predicted) {
         if (actual == null || actual.isEmpty()) actual = "Bilinmiyor";
         if (predicted == null || predicted.isEmpty()) predicted = "Bilinmiyor";
@@ -17,35 +27,56 @@ public class ConfusionMatrix {
         matrix.putIfAbsent(predicted, new TreeMap<>());
     }
 
-    public Map<String, Map<String, Integer>> getMatrix() {
-        return matrix;
-    }
-
-    public Set<String> getCategories() {
-        return matrix.keySet();
-    }
-
-    public int getCount(String actual, String predicted) {
-        if (!matrix.containsKey(actual)) return 0;
-        return matrix.get(actual).getOrDefault(predicted, 0);
-    }
-
+    /**
+     * Converts the confusion matrix data into a printable ASCII table.
+     * Uses the exact customized breakdown per category requested by the user.
+     * @return String representation of the confusion matrix.
+     */
     @Override
     public String toString() {
-        if (matrix.isEmpty()) return "Veri yok.";
+        if (matrix.isEmpty()) return "No data.";
         
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%-15s | %-15s | %s\n", "Gerçek Label", "Tahmin Edilen", "Adet"));
-        sb.append("-".repeat(50)).append("\n");
+        Set<String> allCategories = matrix.keySet();
         
-        for (String actual : matrix.keySet()) {
+        for (String actual : allCategories) {
             Map<String, Integer> row = matrix.get(actual);
-            for (String predicted : row.keySet()) {
-                if (!actual.equals(predicted)) {
-                    sb.append(String.format("[X] %-13s -> %-15s : %d hata\n", actual, predicted, row.get(predicted)));
+            if (row == null || row.isEmpty()) continue;
+
+            // Calculate metrics for this specific actual category
+            int categoryTotal = 0;
+            int categoryCorrect = 0;
+            int categoryErrors = 0;
+
+            for (String predicted : allCategories) {
+                int count = row.getOrDefault(predicted, 0);
+                categoryTotal += count;
+                if (actual.equals(predicted)) {
+                    categoryCorrect += count;
                 } else {
-                    sb.append(String.format("[V] %-13s -> %-15s : %d dogru\n", actual, predicted, row.get(predicted)));
+                    categoryErrors += count;
                 }
+            }
+
+            // Skip if this category was never seen in the actual test dataset
+            if (categoryTotal == 0) continue;
+
+            // Header for this actual category
+            sb.append(String.format("=== %s (Total Records: %d) ===\n", actual, categoryTotal));
+            sb.append(String.format("Correct Predictions: %d\n", categoryCorrect));
+            sb.append(String.format("Error Predictions  : %d\n", categoryErrors));
+
+            // Breakdown of incorrect predictions
+            if (categoryErrors > 0) {
+                sb.append("-> Incorrect Predictions Breakdown:\n");
+                for (String predicted : allCategories) {
+                    int count = row.getOrDefault(predicted, 0);
+                    if (!actual.equals(predicted) && count > 0) {
+                        sb.append(String.format("   * Classified as %-15s: %d time(s)\n", predicted, count));
+                    }
+                }
+            } else {
+                sb.append("-> No incorrect predictions made for this category.\n");
             }
             sb.append("-".repeat(50)).append("\n");
         }

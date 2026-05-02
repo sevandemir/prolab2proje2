@@ -4,70 +4,93 @@ import java.util.ArrayList;
 import java.util.DoubleSummaryStatistics;
 import java.util.stream.Collectors;
 
-public class PreProcessor{
+/**
+ * PreProcessor cleans, encodes, and normalizes user records before sending to classifiers.
+ */
+public class PreProcessor {
     
-    public static double minValueOfDataset=Double.MAX_VALUE;
-    public static double maxValueOfDataset=Double.MIN_VALUE;
-    public static double averageValueOfDataset=0.0;
+    public static double minValueOfDataset = Double.MAX_VALUE;
+    public static double maxValueOfDataset = Double.MIN_VALUE;
+    public static double averageValueOfDataset = 0.0;
 
-    public void dataCleaner(ArrayList<UserRecord> userRecordList){ //Pass a ArrayList of UserRecord's = userRecordList
+    /**
+     * Cleans the dataset by removing empty/invalid records or logically incorrect entries.
+     * @param userRecordList The dataset to filter.
+     */
+    public void dataCleaner(ArrayList<UserRecord> userRecordList) {
+        if (userRecordList == null || userRecordList.isEmpty()) return;
 
-        userRecordList.removeIf(record->record==DataLoader.INVALID_USER_RECORD_TEMPLATE //Check for Invalid templates first to speed up the process
-            || record.getLineNetTotal()<=0.0 //Logic error : Money spent cant be 0 or negative
-            || record.getClientCode()<=0 //Logic error : Client code cant be 0 or negative 
-            || (!"K".equalsIgnoreCase(record.getGender().trim()) && !"E".equalsIgnoreCase(record.getGender().trim())) //IF gender is not equal to "K/k - E/e" - Yoda condition :D
+        userRecordList.removeIf(record -> record == DataLoader.INVALID_USER_RECORD_TEMPLATE
+            || record.getLineNetTotal() <= 0.0 
+            || record.getClientCode() <= 0 
+            || (!"K".equalsIgnoreCase(record.getGender().trim()) && !"E".equalsIgnoreCase(record.getGender().trim()))
         );
     }
 
-    public void genderEncoder(ArrayList<UserRecord> userRecordList){ //Pass a ArrayList of UserRecord's = userRecordList
+    /**
+     * Iterates through the list to encode gender values into numerical representations.
+     * @param userRecordList The records to encode.
+     */
+    public void genderEncoder(ArrayList<UserRecord> userRecordList) {
+        if (userRecordList == null || userRecordList.isEmpty()) return;
 
-        for(UserRecord record : userRecordList){ //Iterate through userRecordList
-
-            if(record.getGender().equalsIgnoreCase("K")){
-
-                record.setEncodedGender(0); //If female encodedGender=0;
-            }
-            if(record.getGender().equalsIgnoreCase("E")){
-                record.setEncodedGender(1); //If male encodedGender=1;
-            }
+        for (UserRecord record : userRecordList) {
+            record.setEncodedGender(encodeGenderFromUserInput(record.getGender()));
         }
     }
 
-    public void calculateNormalizationStats(ArrayList<UserRecord> userRecordList){
+    /**
+     * Computes statistics (min, max, average) used for Normalization.
+     * @param userRecordList The dataset to analyze.
+     */
+    public void calculateNormalizationStats(ArrayList<UserRecord> userRecordList) {
+        if (userRecordList == null || userRecordList.isEmpty()) {
+            minValueOfDataset = 0.0;
+            maxValueOfDataset = 1.0;
+            averageValueOfDataset = 0.0;
+            return;
+        }
 
-        DoubleSummaryStatistics stats=userRecordList.stream()
+        DoubleSummaryStatistics stats = userRecordList.stream()
                                         .collect(Collectors.summarizingDouble(UserRecord::getLineNetTotal));
 
-        averageValueOfDataset=stats.getAverage();
-        maxValueOfDataset=stats.getMax();
-        minValueOfDataset=stats.getMin();
+        averageValueOfDataset = stats.getAverage();
+        maxValueOfDataset = stats.getMax();
+        minValueOfDataset = stats.getMin();
     }
 
-    public void normalizeData(ArrayList<UserRecord> userRecordList){ //Pass a ArrayList of UserRecord's = userRecordList
+    /**
+     * Normalizes numerical spending amounts across the entire dataset to a range of 0-1.
+     * @param userRecordList The records to normalize.
+     */
+    public void normalizeData(ArrayList<UserRecord> userRecordList) {
+        if (userRecordList == null || userRecordList.isEmpty()) return;
 
-        double currentLineNetTotal=0; 
-
-        for(UserRecord record : userRecordList){ //Start normalization process
-
-            currentLineNetTotal=record.getLineNetTotal();
-
-            double normalizedLineTotal=(currentLineNetTotal-minValueOfDataset)/(maxValueOfDataset-minValueOfDataset); //Normalization formula scaling to 0-1
-            record.setNormalizedLineTotal(normalizedLineTotal); //Set normalizedLineTotal
+        for (UserRecord record : userRecordList) {
+            record.setNormalizedLineTotal(normalizeInputFromUserInput(record.getLineNetTotal()));
         }
     }
 
-    public static double normalizeInputFromUserInput(double lineNetTotalInput){
-        
-        return (lineNetTotalInput-minValueOfDataset)/(maxValueOfDataset-minValueOfDataset); //Return normalized value of user input for KNN algorithm 
+    /**
+     * Normalizes a single user's numerical input using previously computed statistics.
+     * @param lineNetTotalInput The spending input.
+     * @return Normalized double value.
+     */
+    public static double normalizeInputFromUserInput(double lineNetTotalInput) {
+        if (maxValueOfDataset == minValueOfDataset) return 0.0;
+        return (lineNetTotalInput - minValueOfDataset) / (maxValueOfDataset - minValueOfDataset);
     }
     
-    public static int encodeGenderFromUserInput(String genderInput){
-
-        if("K".equalsIgnoreCase(genderInput)){
-            return 0; //For female input
-        }
-        else{
-            return 1; //For male input
+    /**
+     * Converts a gender string to its numerical category (0 for female, 1 for male).
+     * @param genderInput The input gender string (E/K).
+     * @return Int category.
+     */
+    public static int encodeGenderFromUserInput(String genderInput) {
+        if ("K".equalsIgnoreCase(genderInput)) {
+            return 0; 
+        } else {
+            return 1; 
         }
     }
 }

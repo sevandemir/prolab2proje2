@@ -3,10 +3,10 @@ package org.proje2.prolab2proje2.data;
 public class UserRecord{
 
     //Raw Data 
-    private int clientCode;
-    private String gender;
-    private double lineNetTotal;
-    private String category;
+    private final int clientCode;
+    private final String gender;
+    private final double lineNetTotal;
+    private final String category;
 
     //Encoded Data
     private int encodedGender;

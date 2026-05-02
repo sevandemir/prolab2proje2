@@ -6,95 +6,144 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class DataLoader{
+/**
+ * DataLoader handles reading and parsing of customer records from an Excel file.
+ */
+public class DataLoader {
     
     public static final UserRecord INVALID_USER_RECORD_TEMPLATE = new UserRecord(0, null, 0.0, null);
 
-    public ArrayList<UserRecord> loadDataFromExcel(String filePath){
+    /**
+     * Reads all rows from the provided Excel file, sanitizes the fields, and preprocesses the records.
+     * Overloaded to compute normalization stats by default.
+     * @param filePath Path to the Excel dataset file.
+     * @return Sanitized list of valid UserRecords.
+     */
+    public ArrayList<UserRecord> loadDataFromExcel(String filePath) {
+        return loadDataFromExcel(filePath, true);
+    }
 
-        ArrayList<UserRecord> recordList = new ArrayList<>(); //Create a new record list made of UserRecords
-        File newFile = new File(filePath); //File for dataset
+    /**
+     * Reads all rows from the Excel file and filters them.
+     * Allows skipping statistics calculation for testing datasets to prevent data leakage.
+     * @param filePath Path to the Excel dataset file.
+     * @param calculateStats If true, updates min, max, average statistics on PreProcessor.
+     * @return List of parsed records.
+     */
+    public ArrayList<UserRecord> loadDataFromExcel(String filePath, boolean calculateStats) {
+        ArrayList<UserRecord> recordList = new ArrayList<>();
+        File newFile = new File(filePath);
 
-        try(Workbook workbook = WorkbookFactory.create(newFile)){
-
+        try (Workbook workbook = WorkbookFactory.create(newFile)) {
             Sheet excelSheet = workbook.getSheetAt(0);
-            Iterator<Row> rowIterator = excelSheet.iterator(); //Row iterator to iterate through whole sheet
+            Iterator<Row> rowIterator = excelSheet.iterator();
 
-            if(rowIterator.hasNext()){
-                rowIterator.next(); //Skip headline 
+            // Skip the header row
+            if (rowIterator.hasNext()) {
+                rowIterator.next();
             }
 
-            while(rowIterator.hasNext()){ //Iterating through the dataset
+            while (rowIterator.hasNext()) {
+                Row excelRow = rowIterator.next();
 
-                Row excelRow = rowIterator.next(); //Catch lines
-
-                //Client Code Block
-                Cell clientCodeCell = excelRow.getCell(9); //Get Client Code Cell
-                int clientCode;
-
-                if(clientCodeCell!=null && clientCodeCell.getCellType()==CellType.STRING){ //If cell is not empty and contains a STRING!
-                    clientCode=Integer.parseInt(clientCodeCell.getStringCellValue().trim()); //Get clientCode and cast it to int to process it in preprocessing
-                }
-                else{
-                    recordList.add(INVALID_USER_RECORD_TEMPLATE); //If read an invalid input add with Invalid template so we can delete at preprocessing
+                // Extract Client Code (Index 9)
+                Cell clientCodeCell = excelRow.getCell(9);
+                if (clientCodeCell == null || (clientCodeCell.getCellType() != CellType.NUMERIC && clientCodeCell.getCellType() != CellType.STRING)) {
                     continue;
                 }
+                Integer clientCode = getIntegerCellValue(clientCodeCell);
+                if (clientCode == null) continue;
 
-                //Line Net Total Block
-                Cell lineNetTotalCell = excelRow.getCell(8); //Get cell of Line Net Total
-                double lineNetTotal;
-
-                if(lineNetTotalCell!=null && lineNetTotalCell.getCellType()==CellType.NUMERIC){ //If cell is not empty and contains a numeric 
-                    lineNetTotal = lineNetTotalCell.getNumericCellValue(); //Get line net total
-                }
-                else{
-                    recordList.add(INVALID_USER_RECORD_TEMPLATE); //If read an invalid input add with Invalid template so we can delete at preprocessing
+                // Extract Line Net Total (Index 8)
+                Cell lineNetTotalCell = excelRow.getCell(8);
+                if (lineNetTotalCell == null || (lineNetTotalCell.getCellType() != CellType.NUMERIC && lineNetTotalCell.getCellType() != CellType.STRING)) {
                     continue;
                 }
-                
-                //Gender Block
-                Cell genderCell = excelRow.getCell(17); //Get cell of gender
-                String gender;
+                Double lineNetTotal = getDoubleCellValue(lineNetTotalCell);
+                if (lineNetTotal == null) continue;
 
-                if(genderCell!=null && genderCell.getCellType()==CellType.STRING){ //If cell is not empty and contains a string 
-                    gender = genderCell.getStringCellValue(); //Get gender
-                }
-                else{
-                    recordList.add(INVALID_USER_RECORD_TEMPLATE); //If read an invalid input add with Invalid template so we can delete at preprocessing
+                // Extract Gender (Index 17)
+                Cell genderCell = excelRow.getCell(17);
+                if (genderCell == null || (genderCell.getCellType() != CellType.NUMERIC && genderCell.getCellType() != CellType.STRING)) {
                     continue;
                 }
-                
-                //Category Block
-                Cell categoryCell=excelRow.getCell(12); //Get cell of category
-                String category;
+                String gender = getStringCellValue(genderCell);
+                if (gender == null) continue;
 
-                if(categoryCell!=null && categoryCell.getCellType()==CellType.STRING){ //If cell is not empty and contains a string 
-                    category = categoryCell.getStringCellValue(); //Get category
-                }
-                else{
-                    recordList.add(INVALID_USER_RECORD_TEMPLATE); //If read an invalid input add with Invalid template so we can delete at preprocessing
+                // Extract Category (Index 12)
+                Cell categoryCell = excelRow.getCell(12);
+                if (categoryCell == null || (categoryCell.getCellType() != CellType.NUMERIC && categoryCell.getCellType() != CellType.STRING)) {
                     continue;
                 }
+                String category = getStringCellValue(categoryCell);
+                if (category == null) continue;
 
-                UserRecord userRecord = new UserRecord(clientCode, gender, lineNetTotal, category); //Create UserRecord object
-                recordList.add(userRecord); //Add user record to Array List
+                // Instantiate valid UserRecord
+                UserRecord userRecord = new UserRecord(clientCode, gender, lineNetTotal, category);
+                recordList.add(userRecord);
+            }
+        } catch (IOException error) {
+            System.err.println("File error while reading data!");
+        } finally {
+            System.out.println("Excel file reading completed.");
+        }
+
+        // Apply preprocessing pipeline
+        PreProcessor preProcessor = new PreProcessor();
+        preProcessor.dataCleaner(recordList); 
+        if (calculateStats) {
+            preProcessor.calculateNormalizationStats(recordList);
+        }
+        preProcessor.genderEncoder(recordList); 
+        preProcessor.normalizeData(recordList); 
+
+        return recordList;
+    }
+
+    /**
+     * Extracts an integer safely from a cell, handling both Numeric and String formats.
+     */
+    private Integer getIntegerCellValue(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return (int) cell.getNumericCellValue();
+        } else if (cell.getCellType() == CellType.STRING) {
+            try {
+                return Integer.parseInt(cell.getStringCellValue().trim());
+            } catch (Exception e) {
+                return null;
             }
         }
+        return null;
+    }
 
-        catch(IOException error){
-            System.err.println("File error!");
+    /**
+     * Extracts a double safely from a cell, handling both Numeric and String formats.
+     */
+    private Double getDoubleCellValue(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return cell.getNumericCellValue();
+        } else if (cell.getCellType() == CellType.STRING) {
+            try {
+                return Double.parseDouble(cell.getStringCellValue().trim());
+            } catch (Exception e) {
+                return null;
+            }
         }
-        finally{
-            System.out.println("Done");
+        return null;
+    }
+
+    /**
+     * Extracts a string safely from a cell, handling both String and Numeric formats.
+     */
+    private String getStringCellValue(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.STRING) {
+            return cell.getStringCellValue().trim();
+        } else if (cell.getCellType() == CellType.NUMERIC) {
+            return String.valueOf((long) cell.getNumericCellValue());
         }
-        
-        PreProcessor preProcessor = new PreProcessor(); //Initialize preprocessor
-
-        preProcessor.dataCleaner(recordList); //Clean corrupted data with preprocessor data cleaner
-        preProcessor.calculateNormalizationStats(recordList);//Calculate normalization values for KNN
-        preProcessor.genderEncoder(recordList); //Encode gender for KNN algorithm
-        preProcessor.normalizeData(recordList); //Normalize data for KNN algorithm
-
-        return recordList; //Return record list
+        return null;
     }
 }

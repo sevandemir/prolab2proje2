@@ -1,90 +1,109 @@
 package org.proje2.prolab2proje2.algorithms;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.Comparator;
 
 import org.proje2.prolab2proje2.data.PreProcessor;
 import org.proje2.prolab2proje2.data.UserRecord;
 
-public class KNNAlgorithm implements IClassifier{
+/**
+ * K-Nearest Neighbors (KNN) Algorithm.
+ * This class predicts the category of new records based on the similarities in the dataset.
+ */
+public class KNNAlgorithm extends BaseAlgorithm {
 
-    private List<UserRecord> dataSet;
-    private int k;
+    private final int k;
+    private List<UserRecord> lastNeighbours;
 
+    /**
+     * Constructor setting the number of neighbors (K) for the algorithm.
+     * @param k The number of nearest neighbors to be considered.
+     */
     public KNNAlgorithm(int k){
-        this.k = k; //Class' own K and parameter K
+        this.k = Math.min(k, 25); 
     }
 
-    @Override
-    public void trainModel(List<UserRecord> trainingDataset){
-
-        dataSet = trainingDataset;
+    /**
+     * Returns the nearest neighbors found in the last prediction.
+     * @return List of nearest neighbor records.
+     */
+    public List<UserRecord> getLastNeighbours() {
+        return lastNeighbours;
     }
 
+    /**
+     * Predicts the product category for a given user record.
+     * @param targetRecord The user record to be predicted.
+     * @return Predicted category name.
+     */
     @Override
     public String predictCategory(UserRecord targetRecord){
-        
-        List<UserRecord> neighbourList = calculateKNearestNeighbours(targetRecord, dataSet, k);
-        return predictCategoryByFrequency(neighbourList);
+        if (dataSet == null || dataSet.isEmpty()) {
+            return "Unknown";
+        }
+        // Calculate and store nearest neighbors
+        this.lastNeighbours = calculateKNearestNeighbours(targetRecord, dataSet, k);
+        // Return majority category among neighbors
+        return predictCategoryByFrequency(lastNeighbours);
     }
 
-    private double calculateEuclidDistance(UserRecord firstRecord , UserRecord secondRecord){
+    /**
+     * Calculates the Euclidean distance between two user records.
+     * @param firstRecord The first user.
+     * @param secondRecord The second user.
+     * @return Calculated Euclidean distance.
+     */
+    public double calculateEuclidDistance(UserRecord firstRecord , UserRecord secondRecord){
+        // Square of the difference between genders
+        double genderDifferenceScore=Math.pow(firstRecord.getEncodedGender()-secondRecord.getEncodedGender(),2);
+        // Square of the difference between normalized line totals
+        double normalizedLineTotalScore=Math.pow(firstRecord.getNormalizedLineTotal()-secondRecord.getNormalizedLineTotal(),2);
 
-        double genderDifferenceScore=Math.pow(firstRecord.getEncodedGender()-secondRecord.getEncodedGender(),2); // (x1-x2)²
-
-        double normalizedLineTotalScore=Math.pow(firstRecord.getNormalizedLineTotal()-secondRecord.getNormalizedLineTotal(),2); //(y1-y2)²
-
-        return Math.sqrt(normalizedLineTotalScore+genderDifferenceScore); //sqrt(a+b)
+        // Square root of the sum of both scores (sqrt(a+b))
+        return Math.sqrt(normalizedLineTotalScore+genderDifferenceScore);
     }   
 
+    /**
+     * Finds the top K nearest neighbors for a target record in the full dataset.
+     * @param targetRecord Target user record.
+     * @param allUserRecords Available past customer records.
+     * @param K Number of neighbors to find.
+     * @return List of the K nearest neighbors.
+     */
     public List<UserRecord> calculateKNearestNeighbours(UserRecord targetRecord , List <UserRecord> allUserRecords , int K){
-
         List <UserRecord> KNeighbourList;
     
-        KNeighbourList=allUserRecords.stream()//Iterate in whole list with stream                                     //Filter eliminates all items which doesnt fulfill the condition
-                        .filter(userRecordIterator->userRecordIterator.getClientCode()!=targetRecord.getClientCode()) //Apply condition to userRecordIterator and filter if not fullfills
-                        .sorted(Comparator.comparingDouble(userRecordIterator -> calculateEuclidDistance(targetRecord , userRecordIterator))) //Sort items according to euclid distance to target
-                        .limit(K) //Limit the list with only first K items 
-                        .collect(Collectors.toList()); //Wrap remaining items in a new UserRecord list 
+        KNeighbourList=allUserRecords.stream()
+                        // Exclude self by matching ClientCode
+                        .filter(userRecordIterator->userRecordIterator.getClientCode()!=targetRecord.getClientCode())
+                        // Sort by ascending Euclidean distance to target
+                        .sorted(Comparator.comparingDouble(userRecordIterator -> calculateEuclidDistance(targetRecord , userRecordIterator)))
+                        // Take the first K items (closest ones)
+                        .limit(K) 
+                        .collect(Collectors.toList());
                         
         return KNeighbourList;
     }
 
-    public String predictCategoryByFrequency(List <UserRecord> KNeighbours){
 
-        String predictedCategory;
-
-        Map <String,Long> categoryCounts=KNeighbours.stream()
-                                        .map(UserRecord::getCategory) //Turn each UserRecord into category
-                                        .collect(Collectors.groupingBy(Function.identity(),Collectors.counting())); //Group by -> Function identity : "Gida" Counting : 5 -> Gida : 5 
-
-        predictedCategory = categoryCounts.entrySet().stream()
-                            .max(Map.Entry.comparingByValue()) //Take the maximum according to values -> Gida : 5
-                            .map(Map.Entry::getKey) //Get key value -> "Gida" not the number 5
-                            .orElse("Unknown"); //Shield 
-
-        return predictedCategory;
-    }
-
-    public String predictCategoryForUserInputWithKNN(String genderInput, Double lineNetTotalInput, int kInput){
-
-        String predictedCategoryForUser;
-
+    /**
+     * Handles single user prediction via manual inputs from UI and processes with KNN.
+     * @param genderInput Given gender (E/K).
+     * @param lineNetTotalInput Given spending amount.
+     * @return Predicted category.
+     */
+    public String predictCategoryForUserInputWithKNN(String genderInput, Double lineNetTotalInput){
+        // Encode gender and normalize spending
         int encodedGenderInput=PreProcessor.encodeGenderFromUserInput(genderInput);
         double normalizedLineNetTotalInput=PreProcessor.normalizeInputFromUserInput(lineNetTotalInput);
 
+        // Instantiate new user record and set properties
         UserRecord inputRecord = new UserRecord(0, genderInput, lineNetTotalInput, null);
         inputRecord.setEncodedGender(encodedGenderInput);
         inputRecord.setNormalizedLineTotal(normalizedLineNetTotalInput);
 
-        KNNAlgorithm KNNAlgorithm = new KNNAlgorithm(kInput); 
-        KNNAlgorithm.trainModel(dataSet);
-
-        predictedCategoryForUser=KNNAlgorithm.predictCategory(inputRecord);
-
-        return predictedCategoryForUser;
+        // Predict with currently trained model
+        return predictCategory(inputRecord);
     }
 }

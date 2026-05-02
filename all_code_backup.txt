@@ -1,0 +1,1666 @@
+======================================================================
+1. pom.xml
+======================================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.proje2</groupId>
+    <artifactId>prolab2proje2</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>prolab 2 proje 2</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.10.2</junit.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>21.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>21.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.dlsc.formsfx</groupId>
+            <artifactId>formsfx-core</artifactId>
+            <version>11.6.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.20.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <executions>
+                    <execution>
+                        <!-- Default configuration for running with: mvn clean javafx:run -->
+                        <id>default-cli</id>
+                        <configuration>
+                            <mainClass>org.proje2.prolab2proje2/org.proje2.prolab2proje2.ui.MainApp</mainClass>
+                            <launcher>app</launcher>
+                            <jlinkZipName>app</jlinkZipName>
+                            <jlinkImageName>app</jlinkImageName>
+                            <noManPages>true</noManPages>
+                            <stripDebug>true</stripDebug>
+                            <noHeaderFiles>true</noHeaderFiles>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+======================================================================
+2. src/main/java/module-info.java
+======================================================================
+module org.proje2.prolab2proje2{
+
+    requires org.apache.poi.poi;
+    requires org.apache.poi.ooxml;
+    requires javafx.controls;
+    requires javafx.fxml;
+
+    requires com.dlsc.formsfx;
+    requires transitive javafx.graphics;
+
+    opens org.proje2.prolab2proje2.ui to javafx.fxml;
+    
+    exports org.proje2.prolab2proje2.ui;
+}
+
+
+======================================================================
+3. src/main/java/org/proje2/prolab2proje2/algorithms/IClassifier.java
+======================================================================
+package org.proje2.prolab2proje2.algorithms; 
+
+import java.util.List;
+import org.proje2.prolab2proje2.data.UserRecord;
+
+public interface IClassifier {
+    void trainModel(List<UserRecord> trainingDataset);
+    String predictCategory(UserRecord targetRecord);
+}
+
+
+======================================================================
+4. src/main/java/org/proje2/prolab2proje2/algorithms/BaseAlgorithm.java
+======================================================================
+package org.proje2.prolab2proje2.algorithms;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.proje2.prolab2proje2.data.UserRecord;
+
+/**
+ * BaseAlgorithm represents the common parent for machine learning models.
+ */
+public abstract class BaseAlgorithm implements IClassifier {
+    protected List<UserRecord> dataSet;
+
+    @Override
+    public void trainModel(List<UserRecord> trainingDataset) {
+        this.dataSet = trainingDataset;
+    }
+
+    /**
+     * Finds the most frequent category within a list of user records.
+     * Shared by both KNN and Decision Tree algorithms.
+     * @param dataset Records to analyze.
+     * @return Most common category name.
+     */
+    protected String predictCategoryByFrequency(List<UserRecord> dataset) {
+        if (dataset == null || dataset.isEmpty()) return "Unknown";
+        return dataset.stream()
+                .collect(Collectors.groupingBy(UserRecord::getCategory, Collectors.counting()))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("Unknown");
+    }
+}
+
+
+======================================================================
+5. src/main/java/org/proje2/prolab2proje2/algorithms/DecisionTreeNode.java
+======================================================================
+package org.proje2.prolab2proje2.algorithms;
+
+public class DecisionTreeNode{
+
+    DecisionTreeNode leftNode; //Left branch
+    DecisionTreeNode rightNode; //Right branch
+    String attribute; //Question to be asked
+
+    boolean isLeaf; //Is last node at the branch?
+    String resultCategory; //If last node at branch predicted category
+
+    //Leaf Node Structure
+    public DecisionTreeNode(String resultCategory){
+        this.resultCategory=resultCategory;
+        this.isLeaf=true;
+    }
+
+    //Branch Node Structure
+    public DecisionTreeNode(String attribute , DecisionTreeNode leftNode , DecisionTreeNode rightNode){
+
+        this.attribute=attribute;
+        this.leftNode=leftNode;
+        this.rightNode=rightNode;
+        this.isLeaf=false;
+    }
+}
+
+
+======================================================================
+6. src/main/java/org/proje2/prolab2proje2/algorithms/DecisionTreeAlgorithm.java
+======================================================================
+package org.proje2.prolab2proje2.algorithms;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.proje2.prolab2proje2.data.PreProcessor;
+import org.proje2.prolab2proje2.data.UserRecord;
+
+/**
+ * DecisionTreeAlgorithm implements a classification model using entropy and information gain.
+ */
+public class DecisionTreeAlgorithm extends BaseAlgorithm {
+
+    private DecisionTreeNode rootNode;
+    private int maxDepth = 2; // Default depth
+    private final List<String> lastDecisionPath = new ArrayList<>();
+
+    /**
+     * Constructs a Decision Tree with a specified maximum depth.
+     * @param maxDepth Maximum recursion depth allowed for building nodes.
+     */
+    public DecisionTreeAlgorithm(int maxDepth) {
+        this.maxDepth = maxDepth;
+    }
+
+    /**
+     * Returns the traversal and decisions taken during the most recent prediction.
+     * @return List of branching decision string details.
+     */
+    public List<String> getLastDecisionPath() {
+        return lastDecisionPath;
+    }
+
+    /**
+     * Builds and trains the decision tree structure from the provided training data.
+     * @param trainingDataset Dataset to build tree from.
+     */
+    @Override
+    public void trainModel(List<UserRecord> trainingDataset){
+        this.dataSet = trainingDataset;
+        this.rootNode = buildTree(trainingDataset, 0);
+    }
+
+    /**
+     * Recursively builds the decision tree using the best feature split.
+     * @param data Subset of records to split.
+     * @param currentDepth Current recursion depth.
+     * @return DecisionTreeNode (internal branch or leaf node).
+     */
+    private DecisionTreeNode buildTree(List<UserRecord> data, int currentDepth) {
+        // Base case: Leaf node if depth reached or data is pure/empty
+        if (currentDepth >= maxDepth || data.isEmpty()) {
+            return CreateLeafNode(data);
+        }
+
+        // Calculate best feature to split using Information Gain
+        double bestGain = -1.0;
+        String bestFeature = null;
+        List<UserRecord> bestLeft = null;
+        List<UserRecord> bestRight = null;
+
+        // Try Gender split
+        List<UserRecord> maleList = splitDatasetByGender("E", data);
+        List<UserRecord> femaleList = splitDatasetByGender("K", data);
+        double genderGain = calculateInformationGain(data, maleList, femaleList);
+        if (genderGain > bestGain) {
+            bestGain = genderGain;
+            bestFeature = "Gender";
+            bestLeft = maleList;
+            bestRight = femaleList;
+        }
+
+        // Try Spending split (LineNetTotal)
+        List<UserRecord> highExpense = splitDatasetBySpending(data, true);
+        List<UserRecord> lowExpense = splitDatasetBySpending(data, false);
+        double spendingGain = calculateInformationGain(data, highExpense, lowExpense);
+        if (spendingGain > bestGain) {
+            bestGain = spendingGain;
+            bestFeature = "LineNetTotal";
+            bestLeft = highExpense;
+            bestRight = lowExpense;
+        }
+
+        // If no substantial gain or feature found, create a leaf node
+        if (bestGain <= 0.0) {
+            return CreateLeafNode(data);
+        }
+
+        return new DecisionTreeNode(bestFeature, 
+            buildTree(bestLeft, currentDepth + 1), 
+            buildTree(bestRight, currentDepth + 1));
+    }
+
+    /**
+     * Predicts the product category for a given user record.
+     * @param targetRecord The user record to be predicted.
+     * @return Predicted category name.
+     */
+    @Override
+    public String predictCategory(UserRecord targetRecord){
+        if(rootNode == null){
+            return "Model Not Trained"; //Null shield if model not trained 
+        }
+        this.lastDecisionPath.clear();
+        return SearchInDecisionTree(rootNode, targetRecord); //Return prediction
+    }
+
+    /**
+     * Calculates Shannon Entropy to measure impurity in data.
+     * @param data Subset of user records.
+     * @return Calculated entropy value.
+     */
+    private double calculateUncertainty(List<UserRecord> data) {
+        if (data == null || data.isEmpty()) return 0.0;
+        Map<String, Long> categoryCounts = data.stream()
+            .collect(Collectors.groupingBy(UserRecord::getCategory, Collectors.counting()));
+        double entropy = 0.0;
+        for (long count : categoryCounts.values()) {
+            double p = (double) count / data.size();
+            entropy -= p * (Math.log(p) / Math.log(2));
+        }
+        return entropy;
+    }
+
+    /**
+     * Calculates Information Gain using parent and child entropies.
+     * @param parentData Parent dataset.
+     * @param leftChild Left branch dataset.
+     * @param rightChild Right branch dataset.
+     * @return Difference in entropy.
+     */
+    private double calculateInformationGain(List<UserRecord> parentData, List<UserRecord> leftChild, List<UserRecord> rightChild) {
+        double parentEntropy = calculateUncertainty(parentData);
+        double leftEntropy = calculateUncertainty(leftChild);
+        double rightEntropy = calculateUncertainty(rightChild);
+        
+        double leftWeight = (double) leftChild.size() / parentData.size();
+        double rightWeight = (double) rightChild.size() / parentData.size();
+        
+        return parentEntropy - (leftWeight * leftEntropy + rightWeight * rightEntropy);
+    }
+
+    /**
+     * Filters user records matching the specified gender.
+     * @param gender Target gender string.
+     * @param dataset Records to filter.
+     * @return Filtered list.
+     */
+    private List<UserRecord> splitDatasetByGender(String gender , List<UserRecord> dataset){ 
+        return dataset.stream()
+            .filter(userRecordIterator->userRecordIterator.getGender().equalsIgnoreCase(gender))
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Filters user records based on spending thresholds compared to the dataset average.
+     * @param dataset Records to filter.
+     * @param isHighExpense True for above average, false for below or equal.
+     * @return Filtered list.
+     */
+    private List<UserRecord> splitDatasetBySpending(List <UserRecord> dataset ,Boolean isHighExpense){ 
+        if(isHighExpense){
+            return dataset.stream()
+                .filter(userRecordIterator->userRecordIterator.getLineNetTotal() > PreProcessor.averageValueOfDataset)
+                .collect(Collectors.toList());
+        } else {
+            return dataset.stream()
+                .filter(userRecordIterator->userRecordIterator.getLineNetTotal() <= PreProcessor.averageValueOfDataset)
+                .collect(Collectors.toList());
+        }
+    }
+
+    /**
+     * Creates a leaf node with the most frequent category.
+     * @param dataset Leaf dataset.
+     * @return DecisionTreeNode leaf.
+     */
+    private DecisionTreeNode CreateLeafNode(List <UserRecord> dataset){
+        String category = predictCategoryByFrequency(dataset); 
+        return new DecisionTreeNode(category); 
+    }
+
+    /**
+     * Recursively traverses nodes down the tree based on attributes of the target user record.
+     * @param currentNode Node to start searching from.
+     * @param targetUserRecord Input user record.
+     * @return Final leaf result category string.
+     */
+    private String SearchInDecisionTree(DecisionTreeNode currentNode , UserRecord targetUserRecord){ 
+        if(currentNode.isLeaf){
+            lastDecisionPath.add("Yaprak Düğüme Ulaşıldı: Tahmin Edilen Kategori = " + currentNode.resultCategory);
+            return currentNode.resultCategory; 
+        }
+
+        if(currentNode.attribute.equals("Gender")){ 
+            if(targetUserRecord.getGender().equalsIgnoreCase("E")){ 
+                lastDecisionPath.add("Dallanma -> Cinsiyet: 'E' (Erkek) olduğu için Sol Düğüme gidildi.");
+                return SearchInDecisionTree(currentNode.leftNode, targetUserRecord); 
+            } else { 
+                lastDecisionPath.add("Dallanma -> Cinsiyet: 'K' (Kadın) olduğu için Sağ Düğüme gidildi.");
+                return SearchInDecisionTree(currentNode.rightNode, targetUserRecord);
+            }
+        } else if(currentNode.attribute.equals("LineNetTotal")){ 
+            if(targetUserRecord.getLineNetTotal() > PreProcessor.averageValueOfDataset){ 
+                lastDecisionPath.add(String.format("Dallanma -> Harcama Tutarı (%.2f) > Ortalama (%.2f) olduğu için Sol Düğüme gidildi.", targetUserRecord.getLineNetTotal(), PreProcessor.averageValueOfDataset));
+                return SearchInDecisionTree(currentNode.leftNode, targetUserRecord); 
+            } else { 
+                lastDecisionPath.add(String.format("Dallanma -> Harcama Tutarı (%.2f) <= Ortalama (%.2f) olduğu için Sağ Düğüme gidildi.", targetUserRecord.getLineNetTotal(), PreProcessor.averageValueOfDataset));
+                return SearchInDecisionTree(currentNode.rightNode, targetUserRecord); 
+            }
+        }
+
+        return "Unknown";
+    }
+
+    /**
+     * Handles single user prediction via manual inputs from UI and processes with Decision Tree.
+     * @param genderInput Given gender (E/K).
+     * @param lineNetTotalInput Given spending amount.
+     * @return Predicted category.
+     */
+    public String predictCategoryForUserInputWithDecisionTree(String genderInput, double lineNetTotalInput){
+        UserRecord inputRecord = new UserRecord(0, genderInput, lineNetTotalInput, null);
+        return predictCategory(inputRecord);
+    }
+}
+
+
+======================================================================
+7. src/main/java/org/proje2/prolab2proje2/algorithms/KNNAlgorithm.java
+======================================================================
+package org.proje2.prolab2proje2.algorithms;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.Comparator;
+
+import org.proje2.prolab2proje2.data.PreProcessor;
+import org.proje2.prolab2proje2.data.UserRecord;
+
+/**
+ * K-Nearest Neighbors (KNN) Algorithm.
+ * This class predicts the category of new records based on the similarities in the dataset.
+ */
+public class KNNAlgorithm extends BaseAlgorithm {
+
+    private int k;
+    private List<UserRecord> lastNeighbours;
+
+    /**
+     * Constructor setting the number of neighbors (K) for the algorithm.
+     * @param k The number of nearest neighbors to be considered.
+     */
+    public KNNAlgorithm(int k){
+        this.k = k; 
+    }
+
+    /**
+     * Returns the nearest neighbors found in the last prediction.
+     * @return List of nearest neighbor records.
+     */
+    public List<UserRecord> getLastNeighbours() {
+        return lastNeighbours;
+    }
+
+    /**
+     * Predicts the product category for a given user record.
+     * @param targetRecord The user record to be predicted.
+     * @return Predicted category name.
+     */
+    @Override
+    public String predictCategory(UserRecord targetRecord){
+        if (dataSet == null || dataSet.isEmpty()) {
+            return "Unknown";
+        }
+        // Calculate and store nearest neighbors
+        this.lastNeighbours = calculateKNearestNeighbours(targetRecord, dataSet, k);
+        // Return majority category among neighbors
+        return predictCategoryByFrequency(lastNeighbours);
+    }
+
+    /**
+     * Calculates the Euclidean distance between two user records.
+     * @param firstRecord The first user.
+     * @param secondRecord The second user.
+     * @return Calculated Euclidean distance.
+     */
+    public double calculateEuclidDistance(UserRecord firstRecord , UserRecord secondRecord){
+        // Square of the difference between genders
+        double genderDifferenceScore=Math.pow(firstRecord.getEncodedGender()-secondRecord.getEncodedGender(),2);
+        // Square of the difference between normalized line totals
+        double normalizedLineTotalScore=Math.pow(firstRecord.getNormalizedLineTotal()-secondRecord.getNormalizedLineTotal(),2);
+
+        // Square root of the sum of both scores (sqrt(a+b))
+        return Math.sqrt(normalizedLineTotalScore+genderDifferenceScore);
+    }   
+
+    /**
+     * Finds the top K nearest neighbors for a target record in the full dataset.
+     * @param targetRecord Target user record.
+     * @param allUserRecords Available past customer records.
+     * @param K Number of neighbors to find.
+     * @return List of the K nearest neighbors.
+     */
+    public List<UserRecord> calculateKNearestNeighbours(UserRecord targetRecord , List <UserRecord> allUserRecords , int K){
+        List <UserRecord> KNeighbourList;
+    
+        KNeighbourList=allUserRecords.stream()
+                        // Exclude self by matching ClientCode
+                        .filter(userRecordIterator->userRecordIterator.getClientCode()!=targetRecord.getClientCode())
+                        // Sort by ascending Euclidean distance to target
+                        .sorted(Comparator.comparingDouble(userRecordIterator -> calculateEuclidDistance(targetRecord , userRecordIterator)))
+                        // Take the first K items (closest ones)
+                        .limit(K) 
+                        .collect(Collectors.toList());
+                        
+        return KNeighbourList;
+    }
+
+    /**
+     * Handles single user prediction via manual inputs from UI and processes with KNN.
+     * @param genderInput Given gender (E/K).
+     * @param lineNetTotalInput Given spending amount.
+     * @return Predicted category.
+     */
+    public String predictCategoryForUserInputWithKNN(String genderInput, Double lineNetTotalInput){
+        // Encode gender and normalize spending
+        int encodedGenderInput=PreProcessor.encodeGenderFromUserInput(genderInput);
+        double normalizedLineNetTotalInput=PreProcessor.normalizeInputFromUserInput(lineNetTotalInput);
+
+        // Instantiate new user record and set properties
+        UserRecord inputRecord = new UserRecord(0, genderInput, lineNetTotalInput, null);
+        inputRecord.setEncodedGender(encodedGenderInput);
+        inputRecord.setNormalizedLineTotal(normalizedLineNetTotalInput);
+
+        // Predict with currently trained model
+        return predictCategory(inputRecord);
+    }
+}
+
+
+======================================================================
+8. src/main/java/org/proje2/prolab2proje2/data/UserRecord.java
+======================================================================
+package org.proje2.prolab2proje2.data;
+
+public class UserRecord{
+
+    //Raw Data 
+    private int clientCode;
+    private String gender;
+    private double lineNetTotal;
+    private String category;
+
+    //Encoded Data
+    private int encodedGender;
+    private double normalizedLineTotal;
+
+    //Raw records without encoded/normalized data
+    public UserRecord(int clientCode, String gender, double lineNetTotal, String category){
+
+        this.clientCode=clientCode;
+        this.gender=gender;
+        this.lineNetTotal=lineNetTotal;
+        this.category=category;
+    }
+
+    //Getters - Raw
+    public int getClientCode(){return clientCode;}
+    public String getGender(){return gender;}
+    public double getLineNetTotal(){return lineNetTotal;}
+    public String getCategory(){return category;}
+
+    //Getters - Encoded
+    public int getEncodedGender(){return encodedGender;}
+    public double getNormalizedLineTotal(){return normalizedLineTotal;}
+    
+    //Setters for encoding
+    public void setEncodedGender(int encodedGender){this.encodedGender=encodedGender;}
+    public void setNormalizedLineTotal(double normalizedLineTotal){this.normalizedLineTotal=normalizedLineTotal;}
+}
+
+
+======================================================================
+9. src/main/java/org/proje2/prolab2proje2/data/DataLoader.java
+======================================================================
+package org.proje2.prolab2proje2.data;
+
+import org.apache.poi.ss.usermodel.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ * DataLoader handles reading and parsing of customer records from an Excel file.
+ */
+public class DataLoader {
+    
+    public static final UserRecord INVALID_USER_RECORD_TEMPLATE = new UserRecord(0, null, 0.0, null);
+
+    /**
+     * Reads all rows from the provided Excel file, sanitizes the fields, and preprocesses the records.
+     * Overloaded to compute normalization stats by default.
+     * @param filePath Path to the Excel dataset file.
+     * @return Sanitized list of valid UserRecords.
+     */
+    public ArrayList<UserRecord> loadDataFromExcel(String filePath) {
+        return loadDataFromExcel(filePath, true);
+    }
+
+    /**
+     * Reads all rows from the Excel file and filters them.
+     * Allows skipping statistics calculation for testing datasets to prevent data leakage.
+     * @param filePath Path to the Excel dataset file.
+     * @param calculateStats If true, updates min, max, average statistics on PreProcessor.
+     * @return List of parsed records.
+     */
+    public ArrayList<UserRecord> loadDataFromExcel(String filePath, boolean calculateStats) {
+        ArrayList<UserRecord> recordList = new ArrayList<>();
+        File newFile = new File(filePath);
+
+        try (Workbook workbook = WorkbookFactory.create(newFile)) {
+            Sheet excelSheet = workbook.getSheetAt(0);
+            Iterator<Row> rowIterator = excelSheet.iterator();
+
+            // Skip the header row
+            if (rowIterator.hasNext()) {
+                rowIterator.next();
+            }
+
+            while (rowIterator.hasNext()) {
+                Row excelRow = rowIterator.next();
+
+                // Extract Client Code (Index 9)
+                Cell clientCodeCell = excelRow.getCell(9);
+                if (clientCodeCell == null || (clientCodeCell.getCellType() != CellType.NUMERIC && clientCodeCell.getCellType() != CellType.STRING)) {
+                    continue;
+                }
+                Integer clientCode = getIntegerCellValue(clientCodeCell);
+                if (clientCode == null) continue;
+
+                // Extract Line Net Total (Index 8)
+                Cell lineNetTotalCell = excelRow.getCell(8);
+                if (lineNetTotalCell == null || (lineNetTotalCell.getCellType() != CellType.NUMERIC && lineNetTotalCell.getCellType() != CellType.STRING)) {
+                    continue;
+                }
+                Double lineNetTotal = getDoubleCellValue(lineNetTotalCell);
+                if (lineNetTotal == null) continue;
+
+                // Extract Gender (Index 17)
+                Cell genderCell = excelRow.getCell(17);
+                if (genderCell == null || (genderCell.getCellType() != CellType.NUMERIC && genderCell.getCellType() != CellType.STRING)) {
+                    continue;
+                }
+                String gender = getStringCellValue(genderCell);
+                if (gender == null) continue;
+
+                // Extract Category (Index 12)
+                Cell categoryCell = excelRow.getCell(12);
+                if (categoryCell == null || (categoryCell.getCellType() != CellType.NUMERIC && categoryCell.getCellType() != CellType.STRING)) {
+                    continue;
+                }
+                String category = getStringCellValue(categoryCell);
+                if (category == null) continue;
+
+                // Instantiate valid UserRecord
+                UserRecord userRecord = new UserRecord(clientCode, gender, lineNetTotal, category);
+                recordList.add(userRecord);
+            }
+        } catch (IOException error) {
+            System.err.println("File error while reading data!");
+        } finally {
+            System.out.println("Excel file reading completed.");
+        }
+
+        // Apply preprocessing pipeline
+        PreProcessor preProcessor = new PreProcessor();
+        preProcessor.dataCleaner(recordList); 
+        if (calculateStats) {
+            preProcessor.calculateNormalizationStats(recordList);
+        }
+        preProcessor.genderEncoder(recordList); 
+        preProcessor.normalizeData(recordList); 
+
+        return recordList;
+    }
+
+    private Integer getIntegerCellValue(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return (int) cell.getNumericCellValue();
+        } else if (cell.getCellType() == CellType.STRING) {
+            try {
+                return Integer.parseInt(cell.getStringCellValue().trim());
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private Double getDoubleCellValue(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return cell.getNumericCellValue();
+        } else if (cell.getCellType() == CellType.STRING) {
+            try {
+                return Double.parseDouble(cell.getStringCellValue().trim());
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private String getStringCellValue(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.STRING) {
+            return cell.getStringCellValue().trim();
+        } else if (cell.getCellType() == CellType.NUMERIC) {
+            return String.valueOf((long) cell.getNumericCellValue());
+        }
+        return null;
+    }
+}
+
+
+======================================================================
+10. src/main/java/org/proje2/prolab2proje2/data/PreProcessor.java
+======================================================================
+package org.proje2.prolab2proje2.data;
+
+import java.util.ArrayList;
+import java.util.DoubleSummaryStatistics;
+import java.util.stream.Collectors;
+
+/**
+ * PreProcessor cleans, encodes, and normalizes user records before sending to classifiers.
+ */
+public class PreProcessor {
+    
+    public static double minValueOfDataset = Double.MAX_VALUE;
+    public static double maxValueOfDataset = Double.MIN_VALUE;
+    public static double averageValueOfDataset = 0.0;
+
+    /**
+     * Cleans the dataset by removing empty/invalid records or logically incorrect entries.
+     * @param userRecordList The dataset to filter.
+     */
+    public void dataCleaner(ArrayList<UserRecord> userRecordList) {
+        if (userRecordList == null || userRecordList.isEmpty()) return;
+
+        userRecordList.removeIf(record -> record == DataLoader.INVALID_USER_RECORD_TEMPLATE
+            || record.getLineNetTotal() <= 0.0 
+            || record.getClientCode() <= 0 
+            || (!"K".equalsIgnoreCase(record.getGender().trim()) && !"E".equalsIgnoreCase(record.getGender().trim()))
+        );
+    }
+
+    /**
+     * Iterates through the list to encode gender values into numerical representations.
+     * @param userRecordList The records to encode.
+     */
+    public void genderEncoder(ArrayList<UserRecord> userRecordList) {
+        if (userRecordList == null || userRecordList.isEmpty()) return;
+
+        for (UserRecord record : userRecordList) {
+            record.setEncodedGender(encodeGenderFromUserInput(record.getGender()));
+        }
+    }
+
+    /**
+     * Computes statistics (min, max, average) used for Normalization.
+     * @param userRecordList The dataset to analyze.
+     */
+    public void calculateNormalizationStats(ArrayList<UserRecord> userRecordList) {
+        if (userRecordList == null || userRecordList.isEmpty()) {
+            minValueOfDataset = 0.0;
+            maxValueOfDataset = 1.0;
+            averageValueOfDataset = 0.0;
+            return;
+        }
+
+        DoubleSummaryStatistics stats = userRecordList.stream()
+                                        .collect(Collectors.summarizingDouble(UserRecord::getLineNetTotal));
+
+        averageValueOfDataset = stats.getAverage();
+        maxValueOfDataset = stats.getMax();
+        minValueOfDataset = stats.getMin();
+    }
+
+    /**
+     * Normalizes numerical spending amounts across the entire dataset to a range of 0-1.
+     * @param userRecordList The records to normalize.
+     */
+    public void normalizeData(ArrayList<UserRecord> userRecordList) {
+        if (userRecordList == null || userRecordList.isEmpty()) return;
+
+        for (UserRecord record : userRecordList) {
+            record.setNormalizedLineTotal(normalizeInputFromUserInput(record.getLineNetTotal()));
+        }
+    }
+
+    /**
+     * Normalizes a single user's numerical input using previously computed statistics.
+     * @param lineNetTotalInput The spending input.
+     * @return Normalized double value.
+     */
+    public static double normalizeInputFromUserInput(double lineNetTotalInput) {
+        if (maxValueOfDataset == minValueOfDataset) return 0.0;
+        return (lineNetTotalInput - minValueOfDataset) / (maxValueOfDataset - minValueOfDataset);
+    }
+    
+    /**
+     * Converts a gender string to its numerical category (0 for female, 1 for male).
+     * @param genderInput The input gender string (E/K).
+     * @return Int category.
+     */
+    public static int encodeGenderFromUserInput(String genderInput) {
+        if ("K".equalsIgnoreCase(genderInput)) {
+            return 0; 
+        } else {
+            return 1; 
+        }
+    }
+}
+
+
+======================================================================
+11. src/main/java/org/proje2/prolab2proje2/eval/ConfusionMatrix.java
+======================================================================
+package org.proje2.prolab2proje2.eval;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+/**
+ * ConfusionMatrix stores and displays the true vs predicted categorization results.
+ */
+public class ConfusionMatrix {
+    private final Map<String, Map<String, Integer>> matrix = new TreeMap<>();
+
+    public void addPrediction(String actual, String predicted) {
+        if (actual == null || actual.isEmpty()) actual = "Bilinmiyor";
+        if (predicted == null || predicted.isEmpty()) predicted = "Bilinmiyor";
+        
+        matrix.putIfAbsent(actual, new TreeMap<>());
+        Map<String, Integer> row = matrix.get(actual);
+        row.put(predicted, row.getOrDefault(predicted, 0) + 1);
+        
+        matrix.putIfAbsent(predicted, new TreeMap<>());
+    }
+
+    @Override
+    public String toString() {
+        if (matrix.isEmpty()) return "No data.";
+        
+        StringBuilder sb = new StringBuilder();
+        Set<String> allCategories = matrix.keySet();
+        
+        for (String actual : allCategories) {
+            Map<String, Integer> row = matrix.get(actual);
+            if (row == null || row.isEmpty()) continue;
+
+            int categoryTotal = 0;
+            int categoryCorrect = 0;
+            int categoryErrors = 0;
+
+            for (String predicted : allCategories) {
+                int count = row.getOrDefault(predicted, 0);
+                categoryTotal += count;
+                if (actual.equals(predicted)) {
+                    categoryCorrect += count;
+                } else {
+                    categoryErrors += count;
+                }
+            }
+
+            if (categoryTotal == 0) continue;
+
+            sb.append(String.format("=== %s (Total Records: %d) ===\n", actual, categoryTotal));
+            sb.append(String.format("Correct Predictions: %d\n", categoryCorrect));
+            sb.append(String.format("Error Predictions  : %d\n", categoryErrors));
+
+            if (categoryErrors > 0) {
+                sb.append("-> Incorrect Predictions Breakdown:\n");
+                for (String predicted : allCategories) {
+                    int count = row.getOrDefault(predicted, 0);
+                    if (!actual.equals(predicted) && count > 0) {
+                        sb.append(String.format("   * Classified as %-15s: %d time(s)\n", predicted, count));
+                    }
+                }
+            } else {
+                sb.append("-> No incorrect predictions made for this category.\n");
+            }
+            sb.append("-".repeat(50)).append("\n");
+        }
+        return sb.toString();
+    }
+}
+
+
+======================================================================
+12. src/main/java/org/proje2/prolab2proje2/eval/EvaluationResult.java
+======================================================================
+package org.proje2.prolab2proje2.eval;
+
+public record EvaluationResult(String algorithmName,
+                               double accuracy,
+                               double durationMs,
+                               double memoryUsedMB,
+                               ConfusionMatrix confusionMatrix) {
+}
+
+
+======================================================================
+13. src/main/java/org/proje2/prolab2proje2/eval/Evaluator.java
+======================================================================
+package org.proje2.prolab2proje2.eval;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.proje2.prolab2proje2.algorithms.BaseAlgorithm;
+import org.proje2.prolab2proje2.algorithms.DecisionTreeAlgorithm;
+import org.proje2.prolab2proje2.algorithms.KNNAlgorithm;
+import org.proje2.prolab2proje2.data.UserRecord;
+
+import javafx.application.Platform;
+import javafx.scene.control.TextArea;
+
+public class Evaluator {
+
+    public List<EvaluationResult> evaluatePerformance(int K, int maxDepth, List<UserRecord> fullDataset, TextArea logArea) {
+        List<EvaluationResult> results = new ArrayList<>();
+        Collections.shuffle(fullDataset);
+
+        int splitPoint = (int) (fullDataset.size() * 0.8);
+
+        List<UserRecord> trainingData = new ArrayList<>(fullDataset.subList(0, splitPoint));
+        List<UserRecord> testData = new ArrayList<>(fullDataset.subList(splitPoint, fullDataset.size()));
+
+        return evaluatePerformanceSeparate(K, maxDepth, trainingData, testData, logArea);
+    }
+
+    public List<EvaluationResult> evaluatePerformanceSeparate(int K, int maxDepth, List<UserRecord> trainingData, List<UserRecord> testData, TextArea logArea) {
+        List<EvaluationResult> results = new ArrayList<>();
+
+        results.add(evaluateModel("KNN Algorithm", new KNNAlgorithm(K), trainingData, testData, logArea));
+        results.add(evaluateModel("Decision Tree Algorithm", new DecisionTreeAlgorithm(maxDepth), trainingData, testData, logArea));
+
+        return results;
+    }
+
+    private EvaluationResult evaluateModel(String name, BaseAlgorithm model, List<UserRecord> trainingData, List<UserRecord> testData, TextArea logArea) {
+        Runtime.getRuntime().gc();
+        long memBefore = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long startTime = System.nanoTime();
+
+        model.trainModel(trainingData);
+
+        int correct = 0;
+        ConfusionMatrix matrix = new ConfusionMatrix();
+        for (UserRecord record : testData) {
+            String actual = record.getCategory();
+            String predicted = model.predictCategory(record);
+            matrix.addPrediction(actual, predicted);
+            if (actual != null && actual.equalsIgnoreCase(predicted)) {
+                correct++;
+            }
+        }
+        long endTime = System.nanoTime();
+        long memAfter = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        double memoryUsedMB = Math.max(0, (memAfter - memBefore) / (1024.0 * 1024.0));
+
+        return calculateResult(name, startTime, endTime, correct, testData.size(), memoryUsedMB, matrix, logArea);
+    }
+
+    private EvaluationResult calculateResult(String name, long startTime, long endTime, int correctPredictions, int totalData, double memoryUsedMB, ConfusionMatrix matrix, TextArea logArea) {
+        double accuracy = totalData == 0 ? 0 : (double) correctPredictions / (double) totalData * 100.0;
+        double durationMs = (endTime - startTime) / 1_000_000.0;
+
+        Platform.runLater(() -> {
+            logArea.appendText("\n=== " + name + " ===\n");
+            logArea.appendText(String.format("Accuracy: %.2f%%\n", accuracy));
+            logArea.appendText(String.format("Duration: %.2f ms\n", durationMs));
+            logArea.appendText(String.format("Memory Used: %.4f MB\n", memoryUsedMB));
+            logArea.appendText("\nConfusion Matrix:\n" + matrix.toString());
+        });
+
+        return new EvaluationResult(name, accuracy, durationMs, memoryUsedMB, matrix);
+    }
+}
+
+
+======================================================================
+14. src/main/java/org/proje2/prolab2proje2/ui/MainApp.java
+======================================================================
+package org.proje2.prolab2proje2.ui;
+
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+public class MainApp extends Application {
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/proje2/prolab2proje2/ui/design.fxml"));
+        Parent root = loader.load();
+        
+        Scene scene = new Scene(root, 900, 600);
+        
+        String css = getClass().getResource("/org/proje2/prolab2proje2/ui/styles.css").toExternalForm();
+        scene.getStylesheets().add(css);
+        
+        primaryStage.setTitle("Prolab 2 - ML Algorithm Performance Benchmarker");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+
+
+======================================================================
+15. src/main/java/org/proje2/prolab2proje2/ui/MainController.java
+======================================================================
+package org.proje2.prolab2proje2.ui;
+
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.XYChart;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.concurrent.Task;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.proje2.prolab2proje2.algorithms.BaseAlgorithm;
+import org.proje2.prolab2proje2.algorithms.DecisionTreeAlgorithm;
+import org.proje2.prolab2proje2.algorithms.KNNAlgorithm;
+import org.proje2.prolab2proje2.data.DataLoader;
+import org.proje2.prolab2proje2.data.PreProcessor;
+import org.proje2.prolab2proje2.data.UserRecord;
+import org.proje2.prolab2proje2.eval.EvaluationResult;
+import org.proje2.prolab2proje2.eval.Evaluator;
+
+public class MainController {
+
+    @FXML private ToggleGroup dataModeGroup;
+    @FXML private RadioButton radioSingleFile;
+    @FXML private RadioButton radioSeparateFiles;
+
+    @FXML private VBox singleFileBox;
+    @FXML private TextField filePathField;
+
+    @FXML private VBox separateFilesBox;
+    @FXML private TextField trainPathField;
+    @FXML private TextField testPathField;
+
+    @FXML private TextField kValueField;
+    @FXML private TextField maxDepthField;
+
+    @FXML private BarChart<String, Number> accuracyChart;
+    @FXML private BarChart<String, Number> durationChart;
+    @FXML private BarChart<String, Number> memoryChart;
+
+    @FXML private TextArea logArea;
+    @FXML private Label statusLabel;
+    @FXML private Label avgAccuracyLabel;
+
+    @FXML private ComboBox<String> genderComboBox;
+    @FXML private TextField spendingField;
+    @FXML private Label knnResultLabel;
+    @FXML private Label dtResultLabel;
+    @FXML private TextArea predictionLogArea;
+
+    private final Evaluator evaluator = new Evaluator();
+    private ArrayList<UserRecord> loadedData;
+    private ArrayList<UserRecord> trainingData;
+    private ArrayList<UserRecord> testData;
+
+    @FXML
+    public void initialize() {
+        dataModeGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == radioSingleFile) {
+                singleFileBox.setVisible(true);
+                singleFileBox.setManaged(true);
+                separateFilesBox.setVisible(false);
+                separateFilesBox.setManaged(false);
+            } else if (newValue == radioSeparateFiles) {
+                singleFileBox.setVisible(false);
+                singleFileBox.setManaged(false);
+                separateFilesBox.setVisible(true);
+                separateFilesBox.setManaged(true);
+            }
+        });
+    }
+
+    private FileChooser showExcelFileChooser(String title) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(title);
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel Files (*.xlsx, *.xls)", "*.xlsx", "*.xls")
+        );
+        return fileChooser;
+    }
+
+    @FXML
+    private void handleSelectFile() {
+        FileChooser fileChooser = showExcelFileChooser("Select Dataset File");
+        File selectedFile = fileChooser.showOpenDialog(new Stage());
+        if (selectedFile != null) {
+            filePathField.setText(selectedFile.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void handleSelectTrainFile() {
+        FileChooser fileChooser = showExcelFileChooser("Select Training Dataset File");
+        File selectedFile = fileChooser.showOpenDialog(new Stage());
+        if (selectedFile != null) {
+            trainPathField.setText(selectedFile.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void handleSelectTestFile() {
+        FileChooser fileChooser = showExcelFileChooser("Select Testing Dataset File");
+        File selectedFile = fileChooser.showOpenDialog(new Stage());
+        if (selectedFile != null) {
+            testPathField.setText(selectedFile.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void handleStartTest() {
+        statusLabel.setText("Processing...");
+        logArea.clear();
+
+        int K = 5;
+        int depth = 2;
+
+        try {
+            K = Integer.parseInt(kValueField.getText().trim());
+            depth = Integer.parseInt(maxDepthField.getText().trim());
+        } catch (NumberFormatException e) {
+            logArea.setText("Error: Invalid K or Depth parameter value!");
+            statusLabel.setText("Error");
+            return;
+        }
+
+        final int finalK = K;
+        final int finalDepth = depth;
+
+        Task<List<EvaluationResult>> analysisTask = new Task<>() {
+            @Override
+            protected List<EvaluationResult> call() throws Exception {
+                DataLoader loader = new DataLoader();
+
+                if (radioSeparateFiles != null && radioSeparateFiles.isSelected()) {
+                    String trainPath = trainPathField.getText();
+                    String testPath = testPathField.getText();
+
+                    if (trainPath == null || trainPath.isEmpty() || testPath == null || testPath.isEmpty()) {
+                        throw new IllegalArgumentException("Both Train and Test file paths must be selected!");
+                    }
+
+                    updateMessage("Loading training data...");
+                    trainingData = loader.loadDataFromExcel(trainPath, true);
+
+                    updateMessage("Loading test data...");
+                    testData = loader.loadDataFromExcel(testPath, false);
+
+                    if (trainingData == null || trainingData.isEmpty() || testData == null || testData.isEmpty()) {
+                        throw new IllegalArgumentException("The training or testing dataset could not be loaded successfully!");
+                    }
+
+                    updateMessage("Running algorithms...");
+                    return evaluator.evaluatePerformanceSeparate(finalK, finalDepth, trainingData, testData, logArea);
+                } else {
+                    String filePath = filePathField.getText();
+                    if (filePath == null || filePath.isEmpty()) {
+                        throw new IllegalArgumentException("A valid dataset file path must be provided!");
+                    }
+
+                    updateMessage("Loading data...");
+                    loadedData = loader.loadDataFromExcel(filePath, true);
+
+                    if (loadedData == null || loadedData.isEmpty()) {
+                        throw new IllegalArgumentException("The dataset file could not be parsed or contains zero records!");
+                    }
+
+                    updateMessage("Running algorithms...");
+                    return evaluator.evaluatePerformance(finalK, finalDepth, loadedData, logArea);
+                }
+            }
+        };
+
+        analysisTask.setOnSucceeded(workerStateEvent -> {
+            List<EvaluationResult> results = analysisTask.getValue();
+            statusLabel.setText("Completed Successfully");
+
+            accuracyChart.getData().clear();
+            durationChart.getData().clear();
+            memoryChart.getData().clear();
+
+            XYChart.Series<String, Number> accSeries = new XYChart.Series<>();
+            XYChart.Series<String, Number> durSeries = new XYChart.Series<>();
+            XYChart.Series<String, Number> memSeries = new XYChart.Series<>();
+
+            double sumAcc = 0;
+            for (EvaluationResult res : results) {
+                accSeries.getData().add(new XYChart.Data<>(res.algorithmName(), res.accuracy()));
+                durSeries.getData().add(new XYChart.Data<>(res.algorithmName(), res.durationMs()));
+                memSeries.getData().add(new XYChart.Data<>(res.algorithmName(), res.memoryUsedMB()));
+                sumAcc += res.accuracy();
+            }
+
+            accuracyChart.getData().add(accSeries);
+            durationChart.getData().add(durSeries);
+            memoryChart.getData().add(memSeries);
+
+            double avgAcc = results.isEmpty() ? 0.0 : sumAcc / results.size();
+            avgAccuracyLabel.setText(String.format("%.1f%%", avgAcc));
+        });
+
+        analysisTask.setOnFailed(workerStateEvent -> {
+            statusLabel.setText("Error");
+            Throwable exc = analysisTask.getException();
+            logArea.setText("An evaluation error occurred:\n" + exc.getMessage());
+        });
+
+        new Thread(analysisTask).start();
+    }
+
+    @FXML
+    private void handleSinglePrediction() {
+        if (genderComboBox.getValue() == null || spendingField.getText().isEmpty()) {
+            predictionLogArea.setText("Please specify both input metrics.");
+            return;
+        }
+
+        String genderInput = genderComboBox.getValue().substring(0, 1).toUpperCase();
+        double lineNetTotalInput;
+
+        try {
+            lineNetTotalInput = Double.parseDouble(spendingField.getText().trim());
+        } catch (NumberFormatException e) {
+            predictionLogArea.setText("Invalid spending amount provided.");
+            return;
+        }
+
+        int K = 5;
+        int depth = 2;
+
+        try {
+            K = Integer.parseInt(kValueField.getText().trim());
+            depth = Integer.parseInt(maxDepthField.getText().trim());
+        } catch (NumberFormatException ignored) {}
+
+        if (radioSeparateFiles != null && radioSeparateFiles.isSelected()) {
+            if (trainingData == null || trainingData.isEmpty()) {
+                predictionLogArea.setText("Model not trained yet. Please run benchmarks first to load the training dataset.");
+                return;
+            }
+        } else {
+            if (loadedData == null || loadedData.isEmpty()) {
+                predictionLogArea.setText("No data loaded. Please select a dataset file and execute standard testing first.");
+                return;
+            }
+        }
+
+        List<UserRecord> trainingDatasetRef = (radioSeparateFiles != null && radioSeparateFiles.isSelected()) ? trainingData : loadedData;
+
+        KNNAlgorithm knn = new KNNAlgorithm(K);
+        knn.trainModel(trainingDatasetRef);
+        String knnResult = knn.predictCategoryForUserInputWithKNN(genderInput, lineNetTotalInput);
+        knnResultLabel.setText(knnResult);
+
+        DecisionTreeAlgorithm dt = new DecisionTreeAlgorithm(depth);
+        dt.trainModel(trainingDatasetRef);
+        String dtResult = dt.predictCategoryForUserInputWithDecisionTree(genderInput, lineNetTotalInput);
+        dtResultLabel.setText(dtResult);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== KNN Algorithm Individual Trace ===\n");
+        sb.append(String.format("Calculated closest %d neighbors with distance scores:\n", K));
+        
+        List<UserRecord> topNeighbours = knn.getLastNeighbours();
+        if (topNeighbours != null) {
+            for (UserRecord neighbour : topNeighbours) {
+                sb.append(String.format("   * User Client %-5d | Gender %s | Total: %.2f | Category: %-15s | Distance: %.4f\n",
+                        neighbour.getClientCode(), neighbour.getGender(), neighbour.getLineNetTotal(), neighbour.getCategory(), knn.calculateEuclidDistance(topNeighbours.get(0), neighbour)));
+            }
+        }
+
+        sb.append("\n=== Decision Tree Algorithm Path Trace ===\n");
+        sb.append("Rule decisions made step by step:\n");
+        
+        List<String> pathDetails = dt.getLastDecisionPath();
+        if (pathDetails != null) {
+            for (String branchStep : pathDetails) {
+                sb.append("   * ").append(branchStep).append("\n");
+            }
+        }
+
+        predictionLogArea.setText(sb.toString());
+    }
+
+    @FXML
+    private void handleClearResults() {
+        accuracyChart.getData().clear();
+        durationChart.getData().clear();
+        memoryChart.getData().clear();
+        logArea.clear();
+        statusLabel.setText("Ready");
+        avgAccuracyLabel.setText("0.0%");
+        knnResultLabel.setText("N/A");
+        dtResultLabel.setText("N/A");
+        predictionLogArea.clear();
+    }
+}
+
+
+======================================================================
+16. src/main/resources/org/proje2/prolab2proje2/ui/design.fxml
+======================================================================
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.text.Text?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="org.proje2.prolab2proje2.ui.MainController"
+            styleClass="root">
+    
+    <top>
+        <HBox alignment="CENTER_LEFT" styleClass="header" spacing="20">
+            <padding>
+                <Insets left="20" right="20" top="10" bottom="10"/>
+            </padding>
+            <Text text="ML Performance Benchmarker" styleClass="title-text"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: #888888;"/>
+        </HBox>
+    </top>
+
+    <left>
+        <VBox spacing="20" styleClass="sidebar" prefWidth="250">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+            
+            <VBox spacing="10">
+                <Label text="CONFIGURATION" styleClass="label-header"/>
+                <Separator style="-fx-opacity: 0.2;"/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Dataset Mode"/>
+                <RadioButton fx:id="radioSingleFile" text="Single File" selected="true">
+                    <toggleGroup><ToggleGroup fx:id="dataModeGroup"/></toggleGroup>
+                </RadioButton>
+                <RadioButton fx:id="radioSeparateFiles" text="Separate Train/Test Files" toggleGroup="$dataModeGroup"/>
+            </VBox>
+
+            <VBox fx:id="singleFileBox" spacing="5">
+                <Label text="Dataset File"/>
+                <HBox spacing="5">
+                    <TextField fx:id="filePathField" editable="false" text="MarketSalesKocaeli.xlsx" HBox.hgrow="ALWAYS"/>
+                    <Button text="..." onAction="#handleSelectFile"/>
+                </HBox>
+            </VBox>
+
+            <VBox fx:id="separateFilesBox" spacing="5" visible="false" managed="false">
+                <VBox spacing="5">
+                    <Label text="Training File"/>
+                    <HBox spacing="5">
+                        <TextField fx:id="trainPathField" editable="false" promptText="Select Train data..." HBox.hgrow="ALWAYS"/>
+                        <Button text="..." onAction="#handleSelectTrainFile"/>
+                    </HBox>
+                </VBox>
+                <VBox spacing="5">
+                    <Label text="Testing File"/>
+                    <HBox spacing="5">
+                        <TextField fx:id="testPathField" editable="false" promptText="Select Test data..." HBox.hgrow="ALWAYS"/>
+                        <Button text="..." onAction="#handleSelectTestFile"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="K-Value (for KNN)"/>
+                <TextField fx:id="kValueField" text="5" promptText="Enter K value..."/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Max Depth (for DT)"/>
+                <TextField fx:id="maxDepthField" text="2" promptText="Enter Max Depth..."/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Actions"/>
+                <Button text="Run Benchmarks" onAction="#handleStartTest" 
+                        styleClass="button-primary" maxWidth="Infinity"/>
+                <Button text="Clear All" onAction="#handleClearResults" 
+                        maxWidth="Infinity"/>
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS" />
+            
+            <VBox spacing="5" styleClass="card">
+                <Label text="Last Run Avg. Accuracy" style="-fx-font-size: 10px;"/>
+                <Label fx:id="avgAccuracyLabel" text="0.0%" styleClass="stat-value"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+            <tabs>
+                <Tab text="Dashboard">
+                    <VBox spacing="20">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+                        <HBox spacing="20" alignment="CENTER" VBox.vgrow="ALWAYS">
+                            <BarChart fx:id="accuracyChart" title="Accuracy (%)" animated="true">
+                                <xAxis><CategoryAxis label="Algorithm" /></xAxis>
+                                <yAxis><NumberAxis label="Accuracy %" lowerBound="0" upperBound="100" autoRanging="false" /></yAxis>
+                            </BarChart>
+                            <BarChart fx:id="durationChart" title="Time (ms)" animated="true">
+                                <xAxis><CategoryAxis label="Algorithm" /></xAxis>
+                                <yAxis><NumberAxis label="Time (ms)" /></yAxis>
+                            </BarChart>
+                            <BarChart fx:id="memoryChart" title="Memory Used (MB)" animated="true">
+                                <xAxis><CategoryAxis label="Algorithm" /></xAxis>
+                                <yAxis><NumberAxis label="MB" /></yAxis>
+                            </BarChart>
+                        </HBox>
+                    </VBox>
+                </Tab>
+
+                <Tab text="Individual Prediction">
+                    <VBox spacing="10">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+                        <Label text="Predict Category for User" styleClass="label-header"/>
+                        
+                        <GridPane hgap="15" vgap="15" styleClass="card">
+                            <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+                            
+                            <Label text="Gender:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <ComboBox fx:id="genderComboBox" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                        <String fx:value="E (Erkek)"/>
+                                        <String fx:value="K (Kadın)"/>
+                                    </FXCollections>
+                                </items>
+                                <value>
+                                    <String fx:value="E (Erkek)"/>
+                                </value>
+                            </ComboBox>
+
+                            <Label text="Spending Amount:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <TextField fx:id="spendingField" text="100.0" promptText="e.g. 250.5" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                            <Button text="Predict Now" onAction="#handleSinglePrediction" 
+                                    styleClass="button-primary" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        </GridPane>
+
+                        <HBox spacing="20">
+                            <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
+                                <Label text="KNN Prediction" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="knnResultLabel" text="N/A" styleClass="stat-value" style="-fx-text-fill: #3498db;"/>
+                            </VBox>
+                            <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
+                                <Label text="Decision Tree Prediction" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="dtResultLabel" text="N/A" styleClass="stat-value" style="-fx-text-fill: #e67e22;"/>
+                            </VBox>
+                        </HBox>
+
+                        <VBox spacing="5" VBox.vgrow="ALWAYS">
+                            <Label text="Tahmin Detayları ve Algoritma Yolları" styleClass="label-header"/>
+                            <TextArea fx:id="predictionLogArea" editable="false" prefHeight="200" VBox.vgrow="ALWAYS"
+                                      promptText="KNN komşuları ve Decision Tree dallanma yolları burada gösterilecektir..."/>
+                        </VBox>
+                    </VBox>
+                </Tab>
+
+                <Tab text="System Logs &amp; Matrix">
+                    <VBox spacing="10">
+                        <padding>
+                            <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+                        <TextArea fx:id="logArea" VBox.vgrow="ALWAYS" editable="false" prefHeight="400"
+                                  promptText="System output will appear here..."/>
+                    </VBox>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+
+</BorderPane>
+
+
+======================================================================
+17. src/main/resources/org/proje2/prolab2proje2/ui/styles.css
+======================================================================
+.root {
+    -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: #f4f6f8;
+}
+
+.header {
+    -fx-background-color: #2c3e50;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 10, 0, 0, 4);
+}
+
+.title-text {
+    -fx-fill: #ffffff;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.sidebar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 1 0 0;
+}
+
+.label-header {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #718096;
+}
+
+.card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #edf2f7;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.02), 5, 0, 0, 2);
+}
+
+.stat-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2d3748;
+}
+
+.button {
+    -fx-background-color: #edf2f7;
+    -fx-text-fill: #4a5568;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #e2e8f0;
+}
+
+.button-primary {
+    -fx-background-color: #3182ce;
+    -fx-text-fill: #ffffff;
+}
+
+.button-primary:hover {
+    -fx-background-color: #2b6cb0;
+}
+
+.text-field, .combo-box {
+    -fx-background-color: #f7fafc;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 6 10;
+}
+
+.text-field:focused, .combo-box:focused {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #3182ce;
+}
+
+.text-area {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 12px;
+}
+
+.text-area .content {
+    -fx-background-color: #ffffff;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: #f4f6f8;
+}
+
+.tab {
+    -fx-background-color: #edf2f7;
+    -fx-background-radius: 6px 6px 0 0;
+    -fx-padding: 8 16;
+}
+
+.tab:selected {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0 #e2e8f0 #ffffff #e2e8f0;
+    -fx-border-radius: 6px 6px 0 0;
+}
+
+.tab .tab-label {
+    -fx-text-fill: #4a5568;
+    -fx-font-weight: bold;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: #2b6cb0;
+}

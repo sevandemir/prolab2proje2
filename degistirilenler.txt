@@ -1,0 +1,20 @@
+=========================================================
+YAPILAN DEĞİŞİKLİKLER VE GÜNCELLEMELER
+=========================================================
+
+1. UI Varsayılan Değer Güncellemeleri (design.fxml)
+---------------------------------------------------------
+- K-Value (for KNN) varsayılan değeri 5'ten 25'e yükseltildi.
+- Max Depth (for DT) varsayılan değeri 2'den 25'e yükseltildi.
+
+2. Backend Algoritma Sınırlandırmaları (KNN & Decision Tree)
+---------------------------------------------------------
+- KNNAlgorithm constructor'ına k değerinin 25'ten büyük olamayacağına dair Math.min(k, 25) eklendi.
+- DecisionTreeAlgorithm constructor'ına maxDepth değerinin 25'ten büyük olamayacağına dair Math.min(maxDepth, 25) eklendi.
+
+3. Decision Tree Yapısının Geliştirilmesi ve Derinleştirilmesi
+---------------------------------------------------------
+- DecisionTreeNode sınıfına `double threshold` alanı eklendi. Böylece her dal kendi özel harcama eşiğine göre bölünme yapabiliyor.
+- DecisionTreeAlgorithm'in `buildTree` metodu optimize edildi. Artık LineNetTotal (Harcama Tutarı) üzerinde tek bir global ortalama yerine veri kümesinin farklı yüzdeliklerini ve ortalamasını (%25, %50, %75 ve ortalama) dinamik eşik değer adayları olarak test edip en yüksek Bilgi Kazancı (Information Gain) sağlayan en iyi eşik değerini buluyor.
+- `SearchInDecisionTree` metodu güncellendi. Artık tahminde dallanma yollarını takip ederken global ortalama yerine o düğümün kendi optimal eşik değerini kullanarak doğru dalı seçiyor.
+- Bu geliştirmelerle birlikte karar ağacı istenen derinliğe kadar dallanabiliyor ve tahmin panelinde daha detaylı adımlar üretiyor.
